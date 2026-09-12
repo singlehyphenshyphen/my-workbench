@@ -1308,7 +1308,7 @@ const APP_ICON='data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAQAAAAEACAYAAABccq
 
 /* ---------- 轻提示 / 震动 ---------- */
 /* 版本标识：每次改动本文件时改这里——在线版会自动提示手机更新 */
-const BUILD_ID='v3-2026-09-11';
+const BUILD_ID='v3-2026-09-12';
 let toastEl=null,toastTimer=null;
 function toast(msg,ms){
   if(!toastEl){toastEl=document.createElement('div');toastEl.className='m-toast';document.body.appendChild(toastEl);}
@@ -2000,7 +2000,7 @@ renderAll();
 setGreeting();
 renderAll();
 // 便于自查的小接口（也可在控制台手动调用）
-window.WB={theme:applyMTheme,toast:toast,refresh:renderAll,quick:openQuick,isMobile:isM,version:'m3',build:BUILD_ID,checkUpdate:checkUpdate};
+window.WB={theme:applyMTheme,toast:toast,refresh:renderAll,quick:openQuick,isMobile:isM,version:'m3',build:BUILD_ID,checkUpdate:checkUpdate,updateTip:showUpdateTip};
 setTimeout(checkUpdate,2500); // 在线版：启动后自检是否有新版本
 document.addEventListener('visibilitychange',function(){if(!document.hidden)checkUpdate();});
 const bp=function(){renderAll();};
