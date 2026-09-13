@@ -1645,7 +1645,7 @@ const APP_ICON='data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAQAAAAEACAYAAABccq
 
 /* ---------- 轻提示 / 震动 ---------- */
 /* 版本标识：每次改动本文件时改这里——在线版会自动提示手机更新 */
-const BUILD_ID='v4-2026-09-13';
+const BUILD_ID='v5-2026-09-13';
 let toastEl=null,toastTimer=null;
 function toast(msg,ms){
   if(!toastEl){toastEl=document.createElement('div');toastEl.className='m-toast';document.body.appendChild(toastEl);}
@@ -1720,13 +1720,29 @@ function showUpdateTip(){
   document.body.appendChild(d);
   setTimeout(()=>d.classList.add('show'),80);
 }
-async function checkUpdate(){
+/* 自动更新：页面刚打开时若线上已有新版本，直接切过去，不需要点按钮。
+   只在「首次加载 + 没有正在输入的内容」时自动跳，避免打断正在填写的内容。 */
+function wbBusyInput(){
+  const a=document.activeElement;
+  return !!(a&&(a.tagName==='INPUT'||a.tagName==='TEXTAREA')&&a.value);
+}
+function wbAutoUpdate(remote){
+  let done=null;
+  try{done=sessionStorage.getItem('wb_autoupd');}catch(e){}
+  if(done===remote){showUpdateTip();return;} // 已自动更新过仍是旧版（缓存顽固）→ 退回手动提示，防死循环
+  try{sessionStorage.setItem('wb_autoupd',remote);}catch(e){}
+  if(typeof toast==='function')toast('检测到新版本，正在更新…');
+  setTimeout(function(){location.replace(location.pathname+'?_='+Date.now());},700);
+}
+async function checkUpdate(auto){
   if(location.protocol!=='http:'&&location.protocol!=='https:')return; // 本地双击打开无需检查
   try{
     const res=await fetch(location.pathname+'?_='+Date.now(),{cache:'no-store'});
     if(!res.ok)return;
     const m=(await res.text()).match(/BUILD_ID\s*=\s*["']([^"']+)["']/);
-    if(m&&m[1]&&m[1]!==BUILD_ID)showUpdateTip();
+    if(!m||!m[1]||m[1]===BUILD_ID)return;
+    if(auto===true&&!wbBusyInput())wbAutoUpdate(m[1]);
+    else showUpdateTip();
   }catch(e){}
 }
 
@@ -2338,8 +2354,8 @@ setGreeting();
 renderAll();
 // 便于自查的小接口（也可在控制台手动调用）
 window.WB={theme:applyMTheme,toast:toast,refresh:renderAll,quick:openQuick,isMobile:isM,version:'m3',build:BUILD_ID,checkUpdate:checkUpdate,updateTip:showUpdateTip};
-setTimeout(checkUpdate,2500); // 在线版：启动后自检是否有新版本
-document.addEventListener('visibilitychange',function(){if(!document.hidden)checkUpdate();});
+setTimeout(function(){checkUpdate(true);},2500); // 在线版：打开页面自检，有新版本直接自动更新
+document.addEventListener('visibilitychange',function(){if(!document.hidden)checkUpdate(false);});
 const bp=function(){renderAll();};
 if(MQ.addEventListener)MQ.addEventListener('change',bp);else if(MQ.addListener)MQ.addListener(bp);
 })();
