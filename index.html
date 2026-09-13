@@ -375,6 +375,14 @@ body[data-mtheme="dark"] ::-webkit-scrollbar-thumb{background:#334055}
 .frm-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(168px,1fr));gap:8px}
 .case-line{display:flex;gap:8px;align-items:center;flex-wrap:wrap;font-size:.84em;color:var(--muted);margin:2px 0 6px}
 .case-title{font-weight:600;color:var(--primary);font-size:.98em}
+
+/* ===== 每日复盘 + 案件待办联动（v6 新增） ===== */
+.dr-mat{background:var(--bg);border:1px dashed var(--border);border-radius:10px;padding:9px 11px;margin-bottom:9px;font-size:.83em;color:#3d4b63;line-height:1.7}
+.dr-mat b{color:var(--primary)}
+.dr-mat .dr-gap{color:var(--muted)}
+.more-tools{margin-top:16px}
+.more-tools>summary{cursor:pointer;color:var(--accent);font-size:.9em;padding:10px 2px;font-weight:600}
+.more-tools[open]>summary{margin-bottom:8px}
 </style>
 </head>
 <body data-page-node-id="UjAMhdxRHXQhkKm5DgqWbY">
@@ -469,6 +477,34 @@ body[data-mtheme="dark"] ::-webkit-scrollbar-thumb{background:#334055}
     </div>
 
     <div id="review" class="view" data-page-node-id="dpe4Q68TTPGif8e0p7Bwad">
+      <div class="card">
+        <h3 style="display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap">
+          <span>📝 每日复盘</span>
+          <input type="date" id="dr-date" style="width:auto;margin:0">
+        </h3>
+        <p class="meta" style="margin-bottom:8px">四个问题天天问同一套：先摆事实，再找主要矛盾，再看信息够不够，最后定下一步集中打哪一点。</p>
+        <div id="dr-material" class="dr-mat"></div>
+        <textarea id="dr-fact" placeholder="① 今天的事实（只写事实，不写评价）"></textarea>
+        <textarea id="dr-conflict" placeholder="② 主要矛盾（今天最卡的那一个点）"></textarea>
+        <textarea id="dr-info" placeholder="③ 信息够不够（还缺什么、去哪查）"></textarea>
+        <textarea id="dr-next" placeholder="④ 下一步集中打哪一点"></textarea>
+        <textarea id="dr-polished" placeholder="⑤ 整理稿（点下面 AI 整理生成，也可以自己写）"></textarea>
+        <div class="row-actions">
+          <button class="btn btn-success" onclick="saveDaily()">保存每日复盘</button>
+          <button class="btn" onclick="aiPolishDaily()">🪄 AI 整理成客观叙述</button>
+          <button class="btn btn-ghost" onclick="clearDaily()">清空</button>
+        </div>
+        <p class="meta" id="dr-status" style="margin-top:6px"></p>
+      </div>
+
+      <div class="section-title">📚 每日复盘记录</div>
+      <div class="card" style="padding:10px">
+        <input id="dr-search" placeholder="搜索关键词（矛盾、案号、当事人……）" oninput="renderDaily()">
+      </div>
+      <div id="dr-list"></div>
+
+      <details class="more-tools">
+      <summary>🧰 更多复盘工具（输出型剖析 / 批评与自我批评 / 输入输出闭环 / 按目标复盘）</summary>
       <div class="hint" data-page-node-id="xLeIIgtG6w2FxhScHNYdE6">📌 <b data-page-node-id="5yJTeROrQTRD8tjPheGPoE">复盘原则：</b>以客观事实与结构为准，分析各方面各联系，深度大于长度，以输出型写作确认复盘效果。</div>
       <div class="card" data-page-node-id="fj3kUaQCJs12zAangEsoeM">
         <select id="rev-goal" data-page-node-id="C5KVNEzDokB58Z5cw0nIeJ"><option value="" data-page-node-id="1n5TaO7NTwNeAzBAWPcdnf">不绑定目标</option></select>
@@ -502,6 +538,7 @@ body[data-mtheme="dark"] ::-webkit-scrollbar-thumb{background:#334055}
       <div class="card" id="io-stats" data-page-node-id="kmic8tMyMhIJmxVdd4NRJD"></div>
       <div class="section-title" data-page-node-id="41njPCcW8BHxtlEPDzcKmb">📚 已保存复盘（按目标分组）</div>
       <div id="reviews-list" data-page-node-id="o8V94z4ukepnCjHjZ2jjCt"></div>
+      </details>
     </div>
 
     <div id="work" class="view" data-page-node-id="lkhXqY4MmSPj16kYRfLOf9">
@@ -611,7 +648,8 @@ const STATE = {
   inputs: JSON.parse(localStorage.getItem('wb_inputs')||'[]'),
   outputs: JSON.parse(localStorage.getItem('wb_outputs')||'[]'),
   works: JSON.parse(localStorage.getItem('wb_works')||'[]'),
-  cases: JSON.parse(localStorage.getItem('wb_cases')||'[]')
+  cases: JSON.parse(localStorage.getItem('wb_cases')||'[]'),
+  dailyReviews: JSON.parse(localStorage.getItem('wb_dailyReviews')||'[]')
 };
 function save(k){localStorage.setItem('wb_'+k, JSON.stringify(STATE[k]));syncTouch();}
 
@@ -902,7 +940,8 @@ function addTodo(){
 }
 function toggleTodo(id){
   const t=STATE.todos.find(x=>x.id==id);
-  if(t){t.done=!t.done;save('todos');renderCalendar();renderDash();if(currentDay)showDay(currentDay);}
+  if(t){t.done=!t.done;save('todos');renderCalendar();renderDash();if(currentDay)showDay(currentDay);
+    if(t.done&&t.caseId&&typeof caseAskMeasure==='function')caseAskMeasure(t.caseId);}
 }
 function delTodo(id){if(!confirm('删除这条待办？'))return;STATE.todos=STATE.todos.filter(x=>x.id!=id);save('todos');renderCalendar();renderDash();if(currentDay)showDay(currentDay);}
 function renderCalendar(){
@@ -1173,7 +1212,7 @@ function syncRestoreSnap(){
   }catch(e){alert('快照损坏：'+e.message);}
 }
 function renderAll(){
-  [renderDash,renderGoals,renderHabits,renderHeat,renderCalendar,renderReview,renderAnalysis,renderCritique,renderIO,renderWork,renderCases,renderCaseAlerts,refreshGoalSelectors,backfillGoalHabits,setGreeting]
+  [renderDash,renderGoals,renderHabits,renderHeat,renderCalendar,renderReview,renderAnalysis,renderCritique,renderIO,renderWork,renderCases,renderCaseAlerts,renderDaily,refreshGoalSelectors,backfillGoalHabits,setGreeting]
     .forEach(fn=>{try{if(typeof fn==='function')fn();}catch(e){}});
 }
 let syncLastPush=0;
@@ -1384,7 +1423,7 @@ function caseDue(c){var ds=(c.measures||[]).map(function(m){return m.nextDate;})
 function caseLv(c){if(c.closed)return 'closed';var d=caseDue(c);if(!d)return 'none';var n=caseDays(d);if(n<0)return 'over';if(n===0)return 'today';if(n<=CASE_SOON)return 'soon';return 'ok';}
 function caseActive(){return (STATE.cases||[]).filter(function(c){return !c.closed;});}
 function caseFind(id){return (STATE.cases||[]).filter(function(c){return c.id===id;})[0];}
-function casePersist(){if(typeof save==='function')save('cases');}
+function casePersist(){if(typeof save==='function')save('cases');if(typeof caseSyncTodos==='function')caseSyncTodos();}
 function caseTip(m){if(typeof toast==='function')toast(m);}
 function caseChip(c){
   if(c.closed)return '<span class="due-chip due-ok">已结案</span>';
@@ -1634,6 +1673,172 @@ function caseInit(){
 }
 caseInit();
 </script>
+<!-- ================= 每日复盘 + 案件待办联动（v6 新增） ================= -->
+<script>
+/* ---------- 每日复盘 ---------- */
+function drDate(){var e=document.getElementById('dr-date');return (e&&e.value)?e.value:caseToday();}
+function drVal(id){var e=document.getElementById(id);return e?e.value.trim():'';}
+function drSet(id,v){var e=document.getElementById(id);if(e)e.value=v==null?'':v;}
+function drStatus(m){var e=document.getElementById('dr-status');if(e)e.textContent=m;}
+function drPersist(){if(typeof save==='function')save('dailyReviews');}
+
+function drMaterials(date){
+  var out=[];
+  (STATE.cases||[]).forEach(function(c){
+    (c.measures||[]).forEach(function(m){
+      if(m.date===date)out.push('措施 · '+(c.no||'未填案号')+' · '+(m.type||'')+(m.result?(' · '+m.result):''));
+    });
+  });
+  (STATE.todos||[]).filter(function(t){return t.date===date&&t.done;}).forEach(function(t){
+    out.push('完成待办 · '+t.text);
+  });
+  (STATE.cases||[]).filter(function(c){return !c.closed&&typeof caseDue==='function'&&caseDue(c)===date;}).forEach(function(c){
+    out.push('今日到期 · '+(c.no||'未填案号')+(c.stage?(' · '+c.stage):''));
+  });
+  return out;
+}
+function renderDrMaterial(){
+  var box=document.getElementById('dr-material'); if(!box)return;
+  var list=drMaterials(drDate());
+  box.innerHTML='<b>当天素材（自动汇总）</b>'+
+    (list.length?('<br>'+list.map(function(x){return '· '+caseE(x);}).join('<br>')):'<br><span class="dr-gap">今天还没有措施、待办或到期案件</span>')+
+    (list.length?'<div class="row-actions" style="margin-top:6px"><button class="btn btn-sm btn-ghost" onclick="drFillFact()">填入事实框</button></div>':'');
+}
+function drFillFact(){
+  var list=drMaterials(drDate()); if(!list.length)return;
+  var cur=drVal('dr-fact');
+  drSet('dr-fact',(cur?cur+'\n':'')+list.map(function(x){return '· '+x;}).join('\n'));
+}
+function saveDaily(){
+  var date=drDate();
+  var rec={date:date,fact:drVal('dr-fact'),conflict:drVal('dr-conflict'),info:drVal('dr-info'),next:drVal('dr-next'),polished:drVal('dr-polished')};
+  if(!rec.fact&&!rec.conflict&&!rec.info&&!rec.next&&!rec.polished){caseTip('至少写一条再保存');return;}
+  var exist=(STATE.dailyReviews||[]).filter(function(x){return x.date===date;})[0];
+  if(exist){
+    if(!confirm(date+' 已有一条，覆盖它？'))return;
+    Object.keys(rec).forEach(function(k){exist[k]=rec[k];});
+    exist.updatedAt=Date.now();
+  }else{
+    STATE.dailyReviews=STATE.dailyReviews||[];
+    rec.id=Date.now();rec.createdAt=Date.now();
+    STATE.dailyReviews.push(rec);
+  }
+  drPersist();renderDaily();drStatus('已保存 '+date);
+}
+function clearDaily(){
+  ['dr-fact','dr-conflict','dr-info','dr-next','dr-polished'].forEach(function(i){drSet(i,'');});
+  drStatus('');
+}
+function aiPolishDaily(){
+  var keyEl=document.getElementById('ai-key');
+  var key=keyEl?keyEl.value:'';
+  if(!key){alert('请先在「🎯 长期目标」的 ⚙️ 设置里填写 DeepSeek Key');return;}
+  var proxyEl=document.getElementById('ai-proxy');
+  var text='事实：'+drVal('dr-fact')+'\n主要矛盾：'+drVal('dr-conflict')+'\n信息缺口：'+drVal('dr-info')+'\n下一步：'+drVal('dr-next');
+  if(text.replace(/\s/g,'').length<10){caseTip('先写点内容再整理');return;}
+  drStatus('正在整理…');
+  var url='https://api.deepseek.com/chat/completions';
+  var headers={'Content-Type':'application/json','Authorization':'Bearer '+key};
+  var body={model:'deepseek-chat',temperature:0.4,messages:[
+    {role:'system',content:'你把零散笔记整理成客观冷静的第一人称复盘叙述。要求：先摆事实且不带情绪评价词，再点出主要矛盾，再说明还缺哪些信息，最后给出下一步集中力量的方向。用口语短句，不超过四百字，不要小标题，不要用破折号。'},
+    {role:'user',content:text}]};
+  fetch(url,{method:'POST',headers:headers,body:JSON.stringify(body)})
+    .then(function(r){return r.json();})
+    .then(function(res){
+      var c=res&&res.choices&&res.choices[0]&&res.choices[0].message?res.choices[0].message.content:'';
+      if(!c)throw new Error('返回为空');
+      drSet('dr-polished',c.trim());
+      drStatus('整理完成，确认后点保存');
+    })
+    .catch(function(e){
+      drStatus((proxyEl&&proxyEl.value)?('直连失败（'+e.message+'）'):('整理失败：'+e.message));
+    });
+}
+function renderDaily(){
+  var box=document.getElementById('dr-list'); if(!box)return;
+  var s=document.getElementById('dr-search');
+  var kw=(s&&s.value?s.value:'').trim().toLowerCase();
+  var list=(STATE.dailyReviews||[]).slice().sort(function(a,b){return a.date<b.date?1:(a.date>b.date?-1:0);});
+  if(kw)list=list.filter(function(r){return [r.date,r.fact,r.conflict,r.info,r.next,r.polished].join(' ').toLowerCase().indexOf(kw)>=0;});
+  if(!list.length){box.innerHTML='<div class="empty">'+(kw?'没有匹配的记录':'还没有每日复盘，写下第一篇吧')+'</div>';return;}
+  box.innerHTML=list.map(function(r){
+    var p=[];
+    if(r.fact)p.push('<p><b>事实：</b>'+caseE(r.fact)+'</p>');
+    if(r.conflict)p.push('<p><b>主要矛盾：</b>'+caseE(r.conflict)+'</p>');
+    if(r.info)p.push('<p><b>信息：</b>'+caseE(r.info)+'</p>');
+    if(r.next)p.push('<p><b>下一步：</b>'+caseE(r.next)+'</p>');
+    if(r.polished)p.push('<p style="background:var(--bg);padding:8px;border-radius:8px;white-space:pre-wrap"><b>整理稿：</b>'+caseE(r.polished)+'</p>');
+    return '<div class="card"><div class="meta">'+caseE(r.date)+'</div>'+p.join('')+
+      '<div class="row-actions"><button class="btn btn-sm btn-ghost" onclick="loadDaily(\''+r.date+'\')">载入编辑</button>'+
+      '<button class="btn btn-sm btn-danger" onclick="delDaily('+r.id+')">删除</button></div></div>';
+  }).join('');
+}
+function loadDaily(date){
+  var r=(STATE.dailyReviews||[]).filter(function(x){return x.date===date;})[0]; if(!r)return;
+  drSet('dr-date',r.date);drSet('dr-fact',r.fact);drSet('dr-conflict',r.conflict);
+  drSet('dr-info',r.info);drSet('dr-next',r.next);drSet('dr-polished',r.polished);
+  renderDrMaterial();drStatus('已载入 '+date+'，改完点保存覆盖');
+  var f=document.getElementById('dr-fact'); if(f&&f.scrollIntoView)f.scrollIntoView({behavior:'smooth',block:'center'});
+}
+function delDaily(id){
+  if(!confirm('删除这条每日复盘？'))return;
+  STATE.dailyReviews=(STATE.dailyReviews||[]).filter(function(x){return x.id!==id;});
+  drPersist();renderDaily();
+}
+
+/* ---------- 案件 → 日历单向打通 ---------- */
+function caseSyncTodos(){
+  STATE.todos=STATE.todos||[];
+  var changed=false;
+  (STATE.cases||[]).forEach(function(c){
+    var mine=STATE.todos.filter(function(t){return t.caseId===c.id&&t.auto;});
+    var due=c.closed?'':(c.dueAt||'');
+    if(due){
+      var text='【案件】'+(c.no||'未填案号')+' - 下一步';
+      var t=mine.filter(function(x){return !x.done;})[0]||mine[0];
+      if(!t){
+        STATE.todos.push({id:Date.now()+Math.floor(Math.random()*997),text:text,date:due,done:false,
+          flexible:false,time:'',goalId:null,caseId:c.id,auto:true});
+        changed=true;
+      }else if(t.date!==due||t.text!==text||t.done){
+        t.date=due;t.text=text;t.done=false;changed=true;
+      }
+    }else{
+      var n=STATE.todos.length;
+      STATE.todos=STATE.todos.filter(function(x){return !(x.caseId===c.id&&x.auto&&!x.done);});
+      if(STATE.todos.length!==n)changed=true;
+    }
+  });
+  if(changed){
+    if(typeof save==='function')save('todos');
+    try{if(typeof renderCalendar==='function')renderCalendar();if(typeof currentDay!=='undefined'&&currentDay&&typeof showDay==='function')showDay(currentDay);}catch(e){}
+  }
+  return changed;
+}
+function caseAskMeasure(caseId){
+  var c=caseFind(caseId); if(!c)return;
+  if(!confirm('把这次完成记成一条措施？\n'+(c.no||'未填案号')+'\n（会跳到案件台账，选措施类型并填下次动作日）'))return;
+  caseOpen[c.id]=true;
+  show('cases',null);
+  var d=document.getElementById('m-date-'+c.id); if(d)d.value=caseToday();
+  var f=document.getElementById('msr-form-'+c.id); if(f&&f.scrollIntoView)f.scrollIntoView({behavior:'smooth',block:'center'});
+  var t=document.getElementById('m-type-'+c.id); if(t)t.focus();
+}
+
+(function(){
+  var d=document.getElementById('dr-date');
+  if(d){
+    if(!d.value)d.value=caseToday();
+    d.addEventListener('change',renderDrMaterial);
+  }
+  if(typeof renderMap==='object'){
+    var rr=renderMap.review;
+    renderMap.review=function(){if(typeof rr==='function')rr();renderDrMaterial();renderDaily();};
+  }
+  caseSyncTodos();
+  renderDrMaterial();renderDaily();
+})();
+</script>
 <!-- ================= 手机版 v3 交互增强（不改动桌面端行为） ================= -->
 <script>
 (function(){
@@ -1645,7 +1850,7 @@ const APP_ICON='data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAQAAAAEACAYAAABccq
 
 /* ---------- 轻提示 / 震动 ---------- */
 /* 版本标识：每次改动本文件时改这里——在线版会自动提示手机更新 */
-const BUILD_ID='v5-2026-09-13';
+const BUILD_ID='v6-2026-09-14';
 let toastEl=null,toastTimer=null;
 function toast(msg,ms){
   if(!toastEl){toastEl=document.createElement('div');toastEl.className='m-toast';document.body.appendChild(toastEl);}
