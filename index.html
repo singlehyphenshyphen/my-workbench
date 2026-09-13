@@ -353,6 +353,28 @@ body[data-mtheme="dark"] ::-webkit-scrollbar-thumb{background:#334055}
   .m-toast.show{opacity:1;transform:translate(-50%,0)}
   .m-update{bottom:calc(80px + env(safe-area-inset-bottom))}
 }
+
+/* ===== 执行案件台账（v4 新增） ===== */
+.nav-badge{margin-left:6px;background:var(--danger);color:#fff;font-size:.62em;padding:1px 6px;border-radius:9px;vertical-align:middle;font-weight:600}
+.due-chip{display:inline-block;font-size:.7em;padding:2px 8px;border-radius:10px;font-weight:600;white-space:nowrap}
+.due-over{background:#fdecea;color:#c0392b}
+.due-today{background:#fff3e0;color:#d97706}
+.due-soon{background:#fffbe6;color:#92400e}
+.due-ok{background:#eaf7f0;color:#1f9d61}
+.case-card{border-left:3px solid var(--border)}
+.case-card.lv-over{border-left-color:var(--danger)}
+.case-card.lv-today{border-left-color:var(--warning)}
+.case-card.lv-soon{border-left-color:#eab308}
+.case-card.closed{opacity:.62}
+.msr{display:flex;gap:10px;align-items:flex-start;padding:7px 0;border-bottom:1px dashed var(--border);font-size:.85em}
+.msr:last-child{border-bottom:none}
+.msr-d{color:var(--muted);min-width:88px;font-variant-numeric:tabular-nums}
+.msr-t{font-weight:600;min-width:76px}
+.msr-x{margin-left:auto;color:var(--muted);cursor:pointer}
+.msr-x:hover{color:var(--danger)}
+.frm-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(168px,1fr));gap:8px}
+.case-line{display:flex;gap:8px;align-items:center;flex-wrap:wrap;font-size:.84em;color:var(--muted);margin:2px 0 6px}
+.case-title{font-weight:600;color:var(--primary);font-size:.98em}
 </style>
 </head>
 <body data-page-node-id="UjAMhdxRHXQhkKm5DgqWbY">
@@ -494,6 +516,52 @@ body[data-mtheme="dark"] ::-webkit-scrollbar-thumb{background:#334055}
       <div id="work-list" data-page-node-id="ysiYWw0mCQ8G4xlGXFtd6e"></div>
     </div>
 
+    <div id="cases" class="view">
+      <div class="grid-3" id="case-stats"></div>
+
+      <div class="card" id="case-alert-card" style="display:none">
+        <h3 style="display:flex;align-items:center;justify-content:space-between;gap:8px">
+          <span>⏰ 到期提醒</span>
+          <button class="btn btn-sm btn-ghost" onclick="caseNotifAsk()">开启浏览器通知</button>
+        </h3>
+        <div id="case-alerts"></div>
+      </div>
+
+      <div class="card">
+        <h3 style="cursor:pointer" onclick="caseToggleForm()">➕ 新增执行案件 <span class="meta" id="case-form-hint">（点这里展开 / 收起）</span></h3>
+        <div id="case-form" style="display:none">
+          <div class="frm-grid">
+            <input id="c-no" placeholder="案号，如（2026）京01执123号">
+            <input id="c-court" placeholder="执行法院">
+            <input id="c-app" placeholder="申请执行人">
+            <input id="c-res" placeholder="被执行人">
+            <input id="c-amount" placeholder="执行标的（元）">
+            <input type="date" id="c-filed">
+            <select id="c-stage"></select>
+            <input type="date" id="c-due">
+          </div>
+          <textarea id="c-note" placeholder="备注：财产线索、卡点、对方动向"></textarea>
+          <div class="row-actions">
+            <button class="btn" id="case-save-btn" onclick="caseSaveItem()">保存案件</button>
+            <button class="btn btn-ghost" onclick="caseReset()">清空表单</button>
+          </div>
+        </div>
+      </div>
+
+      <div class="card">
+        <h3>🧮 期限助手</h3>
+        <div class="frm-grid">
+          <input type="date" id="calc-base">
+          <select id="calc-rule"></select>
+          <input type="number" id="calc-days" min="1" placeholder="自定义天数（选自定义才填）">
+        </div>
+        <p class="meta" id="calc-out" style="margin-top:8px">选择基准日后自动计算到期日</p>
+      </div>
+
+      <div id="case-list"></div>
+      <p class="meta" style="margin-top:6px">期限数值以现行有效规定为准，关键节点请再核对一次；数据存在本机浏览器，记得定期用「备份」页导出。</p>
+    </div>
+
     <div id="backup" class="view" data-page-node-id="NmAURczhoWF0S82SDf9oif">
       <div class="card" data-page-node-id="ARsngRNMKDYicyr812gT1R">
         <h3 data-page-node-id="adz9gJsUH1RWpd0NLAgauw">💾 数据备份</h3>
@@ -542,7 +610,8 @@ const STATE = {
   critiques: JSON.parse(localStorage.getItem('wb_critiques')||'[]'),
   inputs: JSON.parse(localStorage.getItem('wb_inputs')||'[]'),
   outputs: JSON.parse(localStorage.getItem('wb_outputs')||'[]'),
-  works: JSON.parse(localStorage.getItem('wb_works')||'[]')
+  works: JSON.parse(localStorage.getItem('wb_works')||'[]'),
+  cases: JSON.parse(localStorage.getItem('wb_cases')||'[]')
 };
 function save(k){localStorage.setItem('wb_'+k, JSON.stringify(STATE[k]));syncTouch();}
 
@@ -1104,7 +1173,7 @@ function syncRestoreSnap(){
   }catch(e){alert('快照损坏：'+e.message);}
 }
 function renderAll(){
-  [renderDash,renderGoals,renderHabits,renderHeat,renderCalendar,renderReview,renderAnalysis,renderCritique,renderIO,renderWork,refreshGoalSelectors,backfillGoalHabits,setGreeting]
+  [renderDash,renderGoals,renderHabits,renderHeat,renderCalendar,renderReview,renderAnalysis,renderCritique,renderIO,renderWork,renderCases,renderCaseAlerts,refreshGoalSelectors,backfillGoalHabits,setGreeting]
     .forEach(fn=>{try{if(typeof fn==='function')fn();}catch(e){}});
 }
 let syncLastPush=0;
@@ -1230,7 +1299,7 @@ setInterval(syncAuto,60000);
 /* ---------- 手机版：底部 Tab 栏 + 「更多」面板 + 配色主题 ---------- */
 (function(){
   const TABS=[['dashboard','🏠','今日'],['goals','🎯','目标'],['habits','✅','习惯'],['calendar','📅','日历'],['review','🔍','复盘']];
-  const MORE=[['work','💼','工作分析'],['backup','💾','备份与同步']];
+  const MORE=[['cases','🧾','案件台账'],['work','💼','工作分析'],['backup','💾','备份与同步']];
   const THEMES=[['fresh','清爽'],['warm','暖阳'],['forest','墨绿']];
   const MORE_IDS=MORE.map(x=>x[0]);
 
@@ -1297,6 +1366,274 @@ setInterval(syncAuto,60000);
   syncTab('dashboard');
 })();
 </script>
+<!-- ================= 执行案件台账（v4 新增） ================= -->
+<script>
+/* 依赖 script1 提供的全局：STATE / save(k) / esc() / todayStr() / renderMap / show() */
+const CASE_STAGES=['立案','网络查控','传统调查','财产处置','强制措施','追加变更主体','异议与救济','终本','恢复执行','拒执线索','结案'];
+const CASE_TYPES=['执行立案','网络查控','传统调查','查封','冻结','扣划','评估','拍卖/变卖','以物抵债','限制高消费','纳入失信','司法约谈','罚款','司法拘留','追加被执行人','执行异议','复议','异议之诉','执行和解','终本','恢复执行','拒执移送','结案归档','其他'];
+const CASE_RULES=[{n:'执行行为异议 · 15 日',d:15},{n:'复议 · 收到裁定之日起 10 日',d:10},{n:'案外人异议之诉 · 15 日',d:15},{n:'申请执行时效 · 2 年',d:730},{n:'自定义天数',d:0}];
+const CASE_SOON=7;
+let caseEditId=null;
+let caseOpen={};
+
+function caseToday(){return (typeof todayStr==='function')?todayStr():new Date().toISOString().slice(0,10);}
+function caseE(s){return (typeof esc==='function')?esc(s):String(s==null?'':s);}
+function caseUid(){return Date.now().toString(36)+Math.random().toString(36).slice(2,6);}
+function caseDays(d){if(!d)return null;var a=new Date(d+'T00:00:00');if(isNaN(a.getTime()))return null;var b=new Date(caseToday()+'T00:00:00');return Math.round((a-b)/86400000);}
+function caseDue(c){var ds=(c.measures||[]).map(function(m){return m.nextDate;}).filter(Boolean);if(c.dueAt)ds.push(c.dueAt);if(!ds.length)return '';ds.sort();var f=ds.filter(function(d){return caseDays(d)>=0;});return f.length?f[0]:ds[0];}
+function caseLv(c){if(c.closed)return 'closed';var d=caseDue(c);if(!d)return 'none';var n=caseDays(d);if(n<0)return 'over';if(n===0)return 'today';if(n<=CASE_SOON)return 'soon';return 'ok';}
+function caseActive(){return (STATE.cases||[]).filter(function(c){return !c.closed;});}
+function caseFind(id){return (STATE.cases||[]).filter(function(c){return c.id===id;})[0];}
+function casePersist(){if(typeof save==='function')save('cases');}
+function caseTip(m){if(typeof toast==='function')toast(m);}
+function caseChip(c){
+  if(c.closed)return '<span class="due-chip due-ok">已结案</span>';
+  var d=caseDue(c);
+  if(!d)return '<span class="due-chip due-ok">未设期限</span>';
+  var n=caseDays(d),lv=caseLv(c);
+  var cls=lv==='over'?'due-over':(lv==='today'?'due-today':(lv==='soon'?'due-soon':'due-ok'));
+  var tx=lv==='over'?('逾期 '+(-n)+' 天'):(n===0?'今天到期':(n+' 天后'));
+  return '<span class="due-chip '+cls+'">'+tx+' · '+caseE(d)+'</span>';
+}
+
+/* ---------- 渲染 ---------- */
+function renderCases(){
+  var list=document.getElementById('case-list'); if(!list)return;
+  var act=caseActive();
+  var over=act.filter(function(c){return caseLv(c)==='over';}).length;
+  var td=act.filter(function(c){return caseLv(c)==='today';}).length;
+  var soon=act.filter(function(c){return caseLv(c)==='soon';}).length;
+  var st=document.getElementById('case-stats');
+  if(st)st.innerHTML=[['在办案件',act.length],['逾期',over],['今天到期',td],['7 日内到期',soon]]
+    .map(function(x){return '<div class="card"><div class="stat"><div class="num">'+x[1]+'</div><div class="lbl">'+x[0]+'</div></div></div>';}).join('');
+  var all=(STATE.cases||[]).slice().sort(function(a,b){
+    var rank={over:0,today:1,soon:2,ok:3,none:4,closed:5};
+    var la=caseLv(a),lb=caseLv(b);
+    if(rank[la]!==rank[lb])return rank[la]-rank[lb];
+    var da=caseDue(a)||'9999-99-99',db=caseDue(b)||'9999-99-99';
+    return da<db?-1:(da>db?1:0);
+  });
+  if(!all.length){list.innerHTML='<div class="card"><p class="meta">还没有案件。点上面的「新增执行案件」开始记录。</p></div>';return;}
+  list.innerHTML=all.map(function(c){
+    var lv=caseLv(c),open=!!caseOpen[c.id];
+    var ms=(c.measures||[]).slice().sort(function(a,b){return (a.date||'')<(b.date||'')?1:-1;});
+    var line=[c.court,c.app&&('申请：'+c.app),c.res&&('被执：'+c.res),c.amount&&('标的：'+c.amount+' 元'),c.stage,c.filedAt&&('立案：'+c.filedAt)].filter(Boolean).map(caseE).join(' · ');
+    var msHtml=ms.length?ms.map(function(m){
+      return '<div class="msr"><span class="msr-d">'+caseE(m.date||'')+'</span><span class="msr-t">'+caseE(m.type||'')+'</span><span>'+
+        caseE(m.result||'')+(m.nextDate?('　下次：'+caseE(m.nextDate)):'')+'</span>'+
+        '<span class="msr-x" onclick="caseMsrDel(\''+c.id+'\',\''+m.id+'\')">删除</span></div>';
+    }).join(''):'<p class="meta" style="margin-top:4px">还没有措施记录</p>';
+    return '<div class="card case-card lv-'+lv+(c.closed?' closed':'')+'">'+
+      '<div style="display:flex;align-items:center;justify-content:space-between;gap:8px;flex-wrap:wrap">'+
+        '<div class="case-title">'+caseE(c.no||'（未填案号）')+'</div>'+caseChip(c)+'</div>'+
+      '<div class="case-line">'+(line||'<span class="meta">未填基本信息</span>')+'</div>'+
+      (c.note?('<p class="meta" style="margin-bottom:6px">'+caseE(c.note)+'</p>'):'')+
+      '<div class="row-actions">'+
+        '<button class="btn btn-sm" onclick="caseToggleMsr(\''+c.id+'\')">＋ 记一笔措施</button>'+
+        '<button class="btn btn-sm btn-ghost" onclick="caseEdit(\''+c.id+'\')">编辑</button>'+
+        '<button class="btn btn-sm btn-ghost" onclick="caseClose(\''+c.id+'\')">'+(c.closed?'恢复在办':'标记结案')+'</button>'+
+        '<button class="btn btn-sm btn-ghost" onclick="caseDel(\''+c.id+'\')">删除</button></div>'+
+      '<div id="msr-form-'+c.id+'" style="display:'+(open?'block':'none')+';margin-top:8px">'+
+        '<div class="frm-grid">'+
+          '<select id="m-type-'+c.id+'">'+CASE_TYPES.map(function(t){return '<option>'+t+'</option>';}).join('')+'</select>'+
+          '<input type="date" id="m-date-'+c.id+'" value="'+caseToday()+'">'+
+          '<input id="m-result-'+c.id+'" placeholder="结果 / 进展">'+
+          '<input type="date" id="m-next-'+c.id+'" title="下次动作日">'+
+        '</div>'+
+        '<div class="row-actions"><button class="btn btn-sm btn-success" onclick="caseMsrAdd(\''+c.id+'\')">保存措施</button></div>'+
+      '</div>'+
+      '<div style="margin-top:8px"><div class="meta" style="margin-bottom:2px">措施记录（'+ms.length+'）</div>'+msHtml+'</div></div>';
+  }).join('');
+}
+
+function caseDueList(){
+  return caseActive().map(function(c){var d=caseDue(c);return {c:c,d:d,n:caseDays(d)};})
+    .filter(function(x){return x.d&&x.n!=null&&x.n<=CASE_SOON;})
+    .sort(function(a,b){return a.n-b.n;});
+}
+function caseDashCard(list){
+  var dash=document.getElementById('dashboard'); if(!dash)return;
+  var card=document.getElementById('dash-case-card');
+  if(!card){
+    card=document.createElement('div');card.className='card';card.id='dash-case-card';
+    var stats=document.getElementById('dash-stats');
+    if(stats&&stats.parentNode===dash)stats.insertAdjacentElement('afterend',card);else dash.insertBefore(card,dash.firstChild);
+  }
+  if(!list.length){card.style.display='none';return;}
+  card.style.display='block';
+  card.innerHTML='<h3>🧾 执行案件提醒（'+list.length+'）</h3>'+list.slice(0,6).map(function(x){
+    var lv=x.n<0?'due-over':(x.n===0?'due-today':'due-soon');
+    var tx=x.n<0?('逾期 '+(-x.n)+' 天'):(x.n===0?'今天':(x.n+' 天后'));
+    return '<div class="msr"><span class="due-chip '+lv+'">'+tx+'</span><span>'+caseE(x.c.no||'未填案号')+'</span>'+
+      '<span class="meta">'+caseE(x.d)+' · '+caseE(x.c.stage||'')+'</span></div>';
+  }).join('')+'<div class="row-actions"><button class="btn btn-sm btn-ghost" onclick="show(\'cases\',null)">打开台账</button></div>';
+}
+function renderCaseAlerts(){
+  var list=caseDueList();
+  var badge=document.getElementById('nav-case-badge');
+  var urgent=list.filter(function(x){return x.n<=0;}).length;
+  if(badge){badge.textContent=String(urgent||list.length);badge.style.display=list.length?'inline-block':'none';}
+  var card=document.getElementById('case-alert-card'),box=document.getElementById('case-alerts');
+  if(card&&box){
+    if(!list.length){card.style.display='none';box.innerHTML='';}
+    else{
+      card.style.display='block';
+      box.innerHTML=list.map(function(x){
+        var lv=x.n<0?'due-over':(x.n===0?'due-today':'due-soon');
+        var tx=x.n<0?('逾期 '+(-x.n)+' 天'):(x.n===0?'今天到期':(x.n+' 天后'));
+        return '<div class="msr"><span class="msr-d">'+caseE(x.d)+'</span><span class="due-chip '+lv+'">'+tx+'</span>'+
+          '<span>'+caseE(x.c.no||'未填案号')+' · '+caseE(x.c.stage||'')+'</span>'+
+          '<span class="msr-x" onclick="show(\'cases\',null)">查看</span></div>';
+      }).join('');
+    }
+  }
+  caseDashCard(list);
+}
+
+/* ---------- 增删改 ---------- */
+function caseToggleForm(force){
+  var f=document.getElementById('case-form'); if(!f)return;
+  f.style.display=(force!=null?!!force:f.style.display==='none')?'block':'none';
+}
+function caseReset(){
+  caseEditId=null;
+  ['c-no','c-court','c-app','c-res','c-amount','c-note','c-filed','c-due'].forEach(function(id){var e=document.getElementById(id);if(e)e.value='';});
+  var s=document.getElementById('c-stage'); if(s)s.selectedIndex=0;
+  var b=document.getElementById('case-save-btn'); if(b)b.textContent='保存案件';
+}
+function caseSaveItem(){
+  var g=function(id){var e=document.getElementById(id);return e?e.value.trim():'';};
+  var no=g('c-no'),res=g('c-res');
+  if(!no&&!res){caseTip('至少填案号或被执行人');return;}
+  if(caseEditId){
+    var c=caseFind(caseEditId); if(!c)return;
+    c.no=no;c.court=g('c-court');c.app=g('c-app');c.res=res;c.amount=g('c-amount');
+    c.stage=g('c-stage');c.filedAt=g('c-filed');c.dueAt=g('c-due');c.note=g('c-note');c.updatedAt=Date.now();
+    caseTip('已更新');
+  }else{
+    STATE.cases=STATE.cases||[];
+    STATE.cases.push({id:caseUid(),no:no,court:g('c-court'),app:g('c-app'),res:res,amount:g('c-amount'),
+      stage:g('c-stage')||CASE_STAGES[0],filedAt:g('c-filed'),dueAt:g('c-due'),note:g('c-note'),
+      measures:[],closed:false,createdAt:Date.now(),updatedAt:Date.now()});
+    caseTip('已添加');
+  }
+  casePersist();caseReset();caseToggleForm(false);renderCases();renderCaseAlerts();
+}
+function caseEdit(id){
+  var c=caseFind(id); if(!c)return;
+  caseEditId=id;caseToggleForm(true);
+  var set=function(i,v){var e=document.getElementById(i);if(e)e.value=v||'';};
+  set('c-no',c.no);set('c-court',c.court);set('c-app',c.app);set('c-res',c.res);set('c-amount',c.amount);
+  set('c-filed',c.filedAt);set('c-due',c.dueAt);set('c-note',c.note);
+  var s=document.getElementById('c-stage'); if(s)s.value=c.stage||CASE_STAGES[0];
+  var b=document.getElementById('case-save-btn'); if(b)b.textContent='保存修改';
+  var f=document.getElementById('case-form'); if(f&&f.scrollIntoView)f.scrollIntoView({behavior:'smooth',block:'center'});
+}
+function caseDel(id){
+  var c=caseFind(id); if(!c)return;
+  if(!confirm('删除案件「'+(c.no||'未填案号')+'」及其全部措施记录？'))return;
+  STATE.cases=(STATE.cases||[]).filter(function(x){return x.id!==id;});
+  casePersist();renderCases();renderCaseAlerts();
+}
+function caseClose(id){
+  var c=caseFind(id); if(!c)return;
+  c.closed=!c.closed;c.updatedAt=Date.now();
+  casePersist();renderCases();renderCaseAlerts();
+}
+function caseToggleMsr(id){caseOpen[id]=!caseOpen[id];renderCases();}
+function caseMsrAdd(id){
+  var c=caseFind(id); if(!c)return;
+  var g=function(i){var e=document.getElementById(i);return e?e.value.trim():'';};
+  var type=g('m-type-'+id);
+  if(!type){caseTip('请选择措施类型');return;}
+  c.measures=c.measures||[];
+  c.measures.push({id:caseUid(),type:type,date:g('m-date-'+id)||caseToday(),result:g('m-result-'+id),nextDate:g('m-next-'+id)});
+  c.updatedAt=Date.now();
+  casePersist();caseOpen[id]=false;renderCases();renderCaseAlerts();caseTip('已记录：'+type);
+}
+function caseMsrDel(cid,mid){
+  var c=caseFind(cid); if(!c)return;
+  c.measures=(c.measures||[]).filter(function(m){return m.id!==mid;});
+  casePersist();renderCases();renderCaseAlerts();
+}
+
+/* ---------- 期限助手 ---------- */
+function caseCalc(){
+  var b=document.getElementById('calc-base'),r=document.getElementById('calc-rule'),
+      d=document.getElementById('calc-days'),out=document.getElementById('calc-out');
+  if(!b||!r||!out)return;
+  var days=(CASE_RULES[r.selectedIndex]||{}).d||0;
+  var custom=parseInt(d&&d.value,10);
+  if(r.selectedIndex===CASE_RULES.length-1&&custom>0)days=custom;
+  if(!b.value||!days){out.textContent='选择基准日后自动计算到期日';return;}
+  var dt=new Date(b.value+'T00:00:00');dt.setDate(dt.getDate()+days);
+  var s=dt.getFullYear()+'-'+String(dt.getMonth()+1).padStart(2,'0')+'-'+String(dt.getDate()).padStart(2,'0');
+  out.innerHTML='到期日：<b>'+s+'</b>（自 '+caseE(b.value)+' 起 '+days+' 天）　'+
+    '<button class="btn btn-sm btn-ghost" onclick="caseCalcToCase(\''+s+'\')">设为某案下次动作日</button>';
+}
+function caseCalcToCase(dateStr){
+  var act=caseActive();
+  if(!act.length){caseTip('还没有在办案件');return;}
+  var names=act.map(function(c,i){return (i+1)+'. '+(c.no||'未填案号');}).join('\n');
+  var pick=prompt('把 '+dateStr+' 设为哪个案件的下次动作日？\n'+names+'\n输入序号：','1');
+  var idx=parseInt(pick,10)-1;
+  if(isNaN(idx)||!act[idx])return;
+  act[idx].dueAt=dateStr;act[idx].updatedAt=Date.now();
+  casePersist();renderCases();renderCaseAlerts();caseTip('已设置：'+(act[idx].no||'未填案号'));
+}
+
+/* ---------- 到期通知 ---------- */
+function caseNotifAsk(){
+  if(!('Notification' in window)){caseTip('当前环境不支持系统通知，页面内提醒照常');return;}
+  if(Notification.permission==='granted'){caseCheckNotify(true);caseTip('通知已开启');return;}
+  Notification.requestPermission().then(function(p){
+    if(p==='granted'){caseTip('已开启到期通知');caseCheckNotify(true);}
+    else caseTip('未开启通知，仍会在页面内提醒');
+  });
+}
+function caseCheckNotify(force){
+  if(!('Notification' in window)||Notification.permission!=='granted')return;
+  var list=caseDueList().filter(function(x){return x.n<=0;});
+  if(!list.length)return;
+  var stamp=caseToday()+'|'+list.map(function(x){return x.c.id+':'+x.d;}).join(',');
+  try{if(!force&&localStorage.getItem('wb_case_notified')===stamp)return;localStorage.setItem('wb_case_notified',stamp);}catch(e){}
+  var h=list[0];
+  new Notification('执行案件到期提醒（'+list.length+' 件）',{body:(h.c.no||'未填案号')+' · '+(h.n<0?('逾期'+(-h.n)+'天'):'今天到期')+' · '+(h.c.stage||'')});
+}
+function casePriorityCheck(){renderCaseAlerts();caseCheckNotify();}
+
+/* ---------- 初始化 ---------- */
+function caseInjectNav(){
+  if(document.getElementById('nav-cases-item'))return;
+  var side=document.querySelector('.sidebar'); if(!side)return;
+  var g=document.createElement('div');g.className='nav-group';g.id='nav-cases-group';
+  g.innerHTML='<div class="nav-group-title">⑤ 执行案件台账</div>'+
+    '<div class="nav-item" id="nav-cases-item">🧾 案件台账<span class="nav-badge" id="nav-case-badge" style="display:none">0</span></div>';
+  var ver=document.getElementById('side-ver');
+  if(ver&&ver.parentNode===side)side.insertBefore(g,ver);else side.appendChild(g);
+  g.querySelector('#nav-cases-item').onclick=function(){show('cases',this);};
+}
+function caseInit(){
+  caseInjectNav();
+  var s=document.getElementById('c-stage');
+  if(s&&!s.options.length)s.innerHTML=CASE_STAGES.map(function(x){return '<option>'+x+'</option>';}).join('');
+  var r=document.getElementById('calc-rule');
+  if(r&&!r.options.length){
+    r.innerHTML=CASE_RULES.map(function(x){return '<option>'+x.n+'</option>';}).join('');
+    ['calc-base','calc-rule','calc-days'].forEach(function(id){var e=document.getElementById(id);if(e){e.addEventListener('change',caseCalc);e.addEventListener('input',caseCalc);}});
+    var b=document.getElementById('calc-base');if(b&&!b.value)b.value=caseToday();
+  }
+  if(typeof renderMap==='object'){
+    renderMap.cases=renderCases;
+    var rd=renderMap.dashboard;
+    renderMap.dashboard=function(){if(typeof rd==='function')rd();caseInjectNav();renderCaseAlerts();};
+  }
+  renderCases();renderCaseAlerts();caseCheckNotify();
+  setInterval(casePriorityCheck,60000);
+  document.addEventListener('visibilitychange',function(){if(!document.hidden)casePriorityCheck();});
+}
+caseInit();
+</script>
 <!-- ================= 手机版 v3 交互增强（不改动桌面端行为） ================= -->
 <script>
 (function(){
@@ -1308,7 +1645,7 @@ const APP_ICON='data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAQAAAAEACAYAAABccq
 
 /* ---------- 轻提示 / 震动 ---------- */
 /* 版本标识：每次改动本文件时改这里——在线版会自动提示手机更新 */
-const BUILD_ID='v3-2026-09-12';
+const BUILD_ID='v4-2026-09-13';
 let toastEl=null,toastTimer=null;
 function toast(msg,ms){
   if(!toastEl){toastEl=document.createElement('div');toastEl.className='m-toast';document.body.appendChild(toastEl);}
