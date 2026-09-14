@@ -1098,7 +1098,7 @@ function importData(){
 }
 
 /* ---------- 云同步（免搭建，双后端） ---------- */
-const SYNC={backend:'jsonblob',code:'',busy:false};
+const SYNC={backend:'jsonblob',code:'',busy:false,dirty:false};
 let syncTimer=null;
 function ghToken(){
   const el=document.getElementById('sync-token');
@@ -1111,6 +1111,7 @@ function ghHeaders(){
 function syncLoadCfg(){
   SYNC.backend=localStorage.getItem('wb_sync_backend')||'jsonblob';
   SYNC.code=localStorage.getItem('wb_sync_code')||'';
+  SYNC.dirty=localStorage.getItem('wb_dirty')==='1';
   const b=document.getElementById('sync-backend'),c=document.getElementById('sync-code'),t=document.getElementById('sync-token');
   if(b)b.value=SYNC.backend; if(c)c.value=SYNC.code; if(t)t.value=localStorage.getItem('wb_sync_token')||'';
   syncStatus();
@@ -1216,13 +1217,17 @@ function renderAll(){
     .forEach(fn=>{try{if(typeof fn==='function')fn();}catch(e){}});
 }
 let syncLastPush=0;
+/* dirty = 本机有改动还没推上去。有它才敢拉取，否则会被云端旧数据覆盖。 */
+function syncMarkDirty(){SYNC.dirty=true;try{localStorage.setItem('wb_dirty','1');}catch(e){}}
+function syncClearDirty(){SYNC.dirty=false;try{localStorage.removeItem('wb_dirty');}catch(e){}}
 function syncTouch(){
   if(!SYNC.code)return;
+  syncMarkDirty();
   if(syncTimer)clearTimeout(syncTimer);
-  const wait=Math.max(6000,15000-(Date.now()-syncLastPush));
+  const wait=Math.max(1200,5000-(Date.now()-syncLastPush));
   syncTimer=setTimeout(()=>{
     syncLastPush=Date.now();
-    syncPush().then(()=>{syncStatus('已自动同步到云端 '+new Date().toLocaleTimeString());})
+    syncPush().then(()=>{syncClearDirty();syncStatus('已自动同步到云端 '+new Date().toLocaleTimeString());})
       .catch(e=>syncStatus('自动同步失败：'+e.message));
   },wait);
 }
@@ -1231,6 +1236,13 @@ async function syncNow(interactive){
   if(SYNC.busy)return; SYNC.busy=true;
   try{
     syncStatus('同步中…');
+    if(SYNC.dirty){ // 本机有未推送的改动：先推上去，再谈拉取，避免被云端旧数据覆盖
+      await syncPush();
+      syncClearDirty();
+      localStorage.setItem('wb_sync_stamp',String(Date.now()));
+      syncStatus('已把本机改动同步到云端 '+new Date().toLocaleTimeString());
+      return;
+    }
     const remote=await syncPull();
     const stamp=parseInt(localStorage.getItem('wb_sync_stamp')||'0',10);
     const rAt=remote&&remote.data?(remote.updatedAt||0):0;
@@ -1255,6 +1267,13 @@ async function syncNow(interactive){
 async function syncAuto(){
   if(!SYNC.code||SYNC.busy)return;
   try{
+    if(SYNC.dirty){
+      await syncPush();
+      syncClearDirty();
+      localStorage.setItem('wb_sync_stamp',String(Date.now()));
+      syncStatus('已把本机改动同步到云端 '+new Date().toLocaleTimeString());
+      return;
+    }
     const remote=await syncPull();
     const stamp=parseInt(localStorage.getItem('wb_sync_stamp')||'0',10);
     const rAt=remote&&remote.data?(remote.updatedAt||0):0;
@@ -1334,6 +1353,9 @@ showDay(todayStr());
 syncLoadCfg();
 if(SYNC.code)setTimeout(()=>syncNow(false),1200);
 setInterval(syncAuto,60000);
+/* 手机切走 / 关页面前，把没推上去的改动立刻推送，否则刷新后会拉云端旧数据把它盖掉 */
+document.addEventListener('visibilitychange',function(){if(document.hidden&&SYNC.code&&SYNC.dirty)syncNow(false);});
+window.addEventListener('pagehide',function(){if(SYNC.code&&SYNC.dirty)syncNow(false);});
 
 /* ---------- 手机版：底部 Tab 栏 + 「更多」面板 + 配色主题 ---------- */
 (function(){
@@ -1850,7 +1872,7 @@ const APP_ICON='data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAQAAAAEACAYAAABccq
 
 /* ---------- 轻提示 / 震动 ---------- */
 /* 版本标识：每次改动本文件时改这里——在线版会自动提示手机更新 */
-const BUILD_ID='v6-2026-09-14';
+const BUILD_ID='v7-2026-09-14';
 let toastEl=null,toastTimer=null;
 function toast(msg,ms){
   if(!toastEl){toastEl=document.createElement('div');toastEl.className='m-toast';document.body.appendChild(toastEl);}
