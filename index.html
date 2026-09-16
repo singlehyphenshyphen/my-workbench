@@ -431,10 +431,11 @@ body[data-mtheme="dark"] ::-webkit-scrollbar-thumb{background:#334055}
           <input id="ai-proxy" placeholder="代理地址（可选，如 /api/proxy）" onchange="saveAiCfg()" data-page-node-id="2cPGTTOEUJY1aoLqVrCCoG">
         </details>
         <input id="goal-title" autocomplete="off" spellcheck="false" placeholder="目标名称（如：摄影）" data-page-node-id="utZrmbefCwaewoSZSxzvwW">
-        <textarea id="goal-why" placeholder="为什么 / 动机"></textarea>
-        <textarea id="goal-constraint" placeholder="约束条件（可选，如：每周可投入时间）"></textarea>
-        <textarea id="goal-extra" placeholder="补充要求 / 拆解偏好（可选，如：偏实操、每天≤30分钟、面向短视频场景）"></textarea>
-        <input id="goal-days" type="number" min="1" max="90" value="30" placeholder="拆解天数（每天一步）" title="AI 拆解后按此天数，把每天一步铺到日历待办">
+        <textarea id="goal-why" placeholder="为什么 / 动机（必填，一句话：为什么非做它不可）"></textarea>
+        <textarea id="goal-constraint" placeholder="约束条件（可选，如：只有周末有空、不能花钱）"></textarea>
+        <textarea id="goal-extra" placeholder="补充要求 / 拆解偏好（可选，如：偏实操、面向短视频场景）"></textarea>
+        <input id="goal-days" type="number" min="1" max="90" value="30" placeholder="拆解天数（近 7 天逐天细化，之后每 3 天一包）" title="AI 拆解后按此天数，把步骤按天铺到日历待办">
+        <input id="goal-minutes" type="number" min="5" max="240" value="25" placeholder="每天可投入分钟数（默认 25）" title="单条动作的耗时上限，超过的会被拆成两条">
         <div style="display:flex;gap:8px;flex-wrap:wrap" data-page-node-id="ZnnRjyKUPC4ycpVvJJAh4C">
           <button class="btn" onclick="addGoal()" data-page-node-id="kthBv3NDGu0LRfjViOPeGL">添加目标</button>
           <button class="btn" onclick="aiDecompose()" data-page-node-id="iJDeCfCeMIDBi6Z9OVayfN">🤖 让 AI 拆解</button>
@@ -477,6 +478,16 @@ body[data-mtheme="dark"] ::-webkit-scrollbar-thumb{background:#334055}
     </div>
 
     <div id="review" class="view" data-page-node-id="dpe4Q68TTPGif8e0p7Bwad">
+      <div class="card" style="border-left:3px solid var(--accent)">
+        <h3>🧠 AI 自检</h3>
+        <p class="meta" style="margin-bottom:8px">把最近 7 天的习惯打卡、逾期待办、执行案件台账、每日复盘和输入输出统计一起交给 AI，让它指出问题、找出主要矛盾、定下周只打的那一个点。案件数据带案号原样发送。</p>
+        <div class="row-actions">
+          <button class="btn" onclick="aiSelfCheck()">🧠 跑一次自检</button>
+        </div>
+        <p class="meta" id="selfcheck-status" style="margin-top:6px"></p>
+        <div id="selfcheck-out" style="display:none;white-space:pre-wrap;background:var(--bg);padding:10px;border-radius:8px;margin-top:8px;line-height:1.8;font-size:.9em"></div>
+      </div>
+
       <div class="card">
         <h3 style="display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap">
           <span>📝 每日复盘</span>
@@ -830,16 +841,33 @@ async function aiDecompose(){
   const title=document.getElementById('goal-title').value;
   if(!title){alert('请先填写目标名称');return;}
   if(!key){alert('请先在 ⚙️ AI 设置里填写 DeepSeek Key');return;}
+  const why=document.getElementById('goal-why').value.trim();
+  if(!why){
+    alert('请先填「为什么 / 动机」，一句话就行。\n\nAI 靠它判断哪条路该排在最前面。不填，拆出来的就是网上抄的通用步骤。');
+    return;
+  }
   const constraint=document.getElementById('goal-constraint').value;
   const proxy=document.getElementById('ai-proxy').value;
   const days=parseInt(document.getElementById('goal-days').value)||30;
-  const why=document.getElementById('goal-why').value.trim();
+  const minEl=document.getElementById('goal-minutes');
+  const minutes=parseInt(minEl&&minEl.value)||25;
   const extraEl=document.getElementById('goal-extra');
   const extra=extraEl?extraEl.value.trim():'';
-  const prompt='【目标】'+title+'\n【动机】'+(why||'（未填写）')+'\n【约束】'+(constraint||'（无）')+'\n【周期】'+days+' 天，每天执行一步\n【补充要求】'+(extra||'（无）')+'\n\n请按「阶段 → 关键结果 → 每日动作」三层方法拆解，严格遵守：\n1. 先判断该目标的 2-3 个关键成功要素与最大卡点，再据此划分阶段；\n2. 划分 3-5 个递进阶段（milestones），每个阶段给出「阶段目标」与「关键结果」（可衡量）；\n3. 为每个阶段排布每日动作，全部展平后必须恰好 '+days+' 条，按时间先后、由易到难，先建立正反馈；\n4. 每个每日动作必须写成「动词 + 具体对象 + 可交付产出 + 预计分钟」，例如「整理对标账号清单，产出 10 个账号表格，用时 30 分钟」；\n5. 禁止"学习/提升/关注/加强/研究一下"等空泛表述，每条动作要让人今晚就能动手；\n6. 第 1 步必须是当天可完成的最小启动动作。\n\n严格返回 JSON（不要多余文字）：{"rewrite":"一句话改写目标（含可衡量标准）","keyResults":["关键结果1","关键结果2"],"milestones":[{"name":"阶段名","goal":"阶段目标","steps":["动词+对象+产出+分钟"]}],"direction":"整体策略与节奏建议","tips":["关键提醒"]}\n硬性校验：milestones 内所有 steps 展平后恰好 '+days+' 条；不要生成习惯建议；只返回 JSON。';
+  const prompt='【目标】'+title+'\n【动机】'+why+'\n【约束】'+(constraint||'（无）')+'\n【每天可投入】'+minutes+' 分钟\n【周期】'+days+' 天\n【补充要求】'+(extra||'（无）')+
+    '\n\n请按「阶段 → 关键结果 → 每日动作」三层方法拆解。下面每一条都是硬标准，写完逐条自检：\n'+
+    '1. 先判断该目标的 2-3 个关键成功要素与最大卡点，再据此划分 3-5 个递进阶段，每个阶段给出可衡量的关键结果。\n'+
+    '2. 每条动作必须写清四件事：在哪做（平台/软件/网址/地点）、用什么（工具/文件/材料）、耗时几分钟、做完能拿出手的具体东西。四件事缺一即不合格。\n'+
+    '3. 每条动作里必须出现至少一个具体名词：平台名、文件名、网址、案号、人名、数量或金额。一个具体名词都出现不了的，说明这条还没拆够。\n'+
+    '4. 禁止出现这些词：学习、提升、加强、关注、了解、研究一下、优化、完善、梳理思路、制定计划、定期复盘、持续推进。\n'+
+    '5. 单条动作耗时不得超过 '+minutes+' 分钟，预计超过的拆成两条。\n'+
+    '6. 换领域自检：把这条动作里的具体名词拿掉之后，如果它在任何一个别的目标里也照样成立，那就是废话，必须重写。\n'+
+    '7. 前 7 天逐天细化，一天一条，要能让人今晚就动手；第 8 天以后不逐天写，改成每 3 天一个「动作包」，写清这 3 天各自要产出什么。\n'+
+    '8. 第 1 条必须是 15 分钟内就能开始、当天能做完的最小启动动作。\n\n'+
+    '只返回 JSON，不要任何多余文字：{"rewrite":"一句话改写目标，含可衡量标准","firstStep":"今天第一步，一句话，含具体名词与耗时","keyResults":["关键结果1","关键结果2"],"milestones":[{"name":"阶段名","goal":"阶段目标","steps":[{"action":"在哪做+用什么+做什么+产出什么","span":1}]}],"direction":"整体策略与节奏","tips":["关键提醒"]}\n'+
+    'span 是这条动作占用的天数：前 7 条一律填 1，之后一律填 3，最后一条按剩余天数调整，保证所有 span 相加恰好等于 '+days+'。不要生成习惯建议。';
   const url='https://api.deepseek.com/chat/completions';
   const headers={'Content-Type':'application/json','Authorization':'Bearer '+key};
-  const body={model:'deepseek-chat',messages:[{role:'system',content:'你是资深目标规划专家与执行教练，擅长把模糊目标拆成「阶段—关键结果—每日动作」三层结构，动作具体、可衡量、有先后依赖。你只输出严格JSON。'},{role:'user',content:prompt}],response_format:{type:'json_object'}};
+  const body={model:'deepseek-chat',messages:[{role:'system',content:'你是目标执行教练，专门把模糊目标拆成让人今晚就能动手的动作。铁律：每条动作都要出现具体平台、文件、网址、案号或数字；禁止出现学习、提升、加强、关注、了解、优化、完善这类空词；写不出具体名词的动作一律重写。你只输出严格JSON。'},{role:'user',content:prompt}],response_format:{type:'json_object'}};
   try{
     let res;
     if(proxy){res=await fetch(proxy,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({url,headers,body})});res=await res.json();res={choices:[{message:{content:res.choices[0].message.content}}]};}
@@ -849,13 +877,21 @@ async function aiDecompose(){
     lastPlan=plan;
     document.getElementById('ai-plan').style.display='block';
     document.getElementById('btn-adopt').style.display='inline-block';
-    const stepText=s=>typeof s==='string'?s:(s&&s.action?s.action:JSON.stringify(s));
-    const stepsOf=m=>((m&&m.steps)||[]).map(stepText);
+    const stepObj=s=>(typeof s==='string')?{action:s,span:1}:(s||{});
+    const stepText=s=>{const o=stepObj(s);return o.action||o.text||JSON.stringify(s);};
+    let acc=0;
+    const stepLi=s=>{
+      const sp=Math.max(1,parseInt(stepObj(s).span,10)||1);
+      const from=acc+1;acc+=sp;
+      const label=sp===1?('第'+from+'天'):('第'+from+'到'+(from+sp-1)+'天');
+      return '<li><b style="color:var(--accent)">'+label+'</b>　'+esc(stepText(s))+'</li>';
+    };
+    const firstStep=plan.firstStep||((plan.milestones||[])[0]&&((plan.milestones[0].steps||[])[0]));
     document.getElementById('ai-plan').innerHTML='<h3>🤖 AI 拆解方案（'+days+' 天）</h3>'+
       '<p><b>目标改写：</b>'+esc(plan.rewrite||'')+'</p>'+
+      (firstStep?'<p style="background:var(--bg);padding:9px 11px;border-radius:8px;border-left:3px solid var(--accent)"><b>👉 今天第一步：</b>'+esc(typeof firstStep==='string'?firstStep:stepText(firstStep))+'</p>':'')+
       (plan.keyResults&&plan.keyResults.length?'<p><b>关键结果：</b>'+plan.keyResults.map(esc).join('、')+'</p>':'')+
-      (plan.milestones||[]).map(m=>'<div class="card"><b>🚩 '+esc(m.name||'阶段')+'</b>'+(m.goal?'<div style="color:var(--muted);font-size:.85em;margin:2px 0">'+esc(m.goal)+'</div>':'')+'<ol style="padding-left:18px">'+stepsOf(m).map(s=>'<li>'+esc(s)+'</li>').join('')+'</ol></div>').join('')+
-
+      (plan.milestones||[]).map(m=>'<div class="card"><b>🚩 '+esc(m.name||'阶段')+'</b>'+(m.goal?'<div style="color:var(--muted);font-size:.85em;margin:2px 0">'+esc(m.goal)+'</div>':'')+'<ol style="padding-left:18px">'+((m.steps||[]).map(stepLi).join(''))+'</ol></div>').join('')+
       (plan.direction?'<p><b>方向：</b>'+esc(plan.direction)+'</p>':'')+
       (plan.tips&&plan.tips.length?'<p><b>提醒：</b>'+esc(plan.tips.join('、'))+'</p>':'');
   }catch(err){alert('AI 拆解失败：'+err.message+'（本地直连若跨域，请配置代理）');}
@@ -866,10 +902,12 @@ function adoptAiPlan(){
   let offset=0;
   (lastPlan.milestones||[]).forEach(m=>{
     ((m&&m.steps)||[]).forEach(s=>{
-      const txt=typeof s==='string'?s:(s&&s.action?s.action:JSON.stringify(s));
+      const o=(typeof s==='string')?{action:s,span:1}:(s||{});
+      const txt=o.action||o.text||JSON.stringify(s);
+      const sp=Math.max(1,parseInt(o.span,10)||1);
       const d=new Date();d.setDate(d.getDate()+offset);
-      STATE.todos.push({id:Date.now()+Math.random(),text:txt,date:todayStr(d),done:false,flexible:false,goalId:gid,type:'subtask',step:offset+1});
-      offset++;
+      STATE.todos.push({id:Date.now()+Math.random(),text:txt,date:todayStr(d),done:false,flexible:false,goalId:gid,type:'subtask',step:offset+1,span:sp});
+      offset+=sp;
     });
   });
   save('goals');save('todos');
@@ -1776,6 +1814,98 @@ function aiPolishDaily(){
       drStatus((proxyEl&&proxyEl.value)?('直连失败（'+e.message+'）'):('整理失败：'+e.message));
     });
 }
+
+/* ---------- AI 自检：汇总工作台数据后交给 AI 分析 ---------- */
+function selfCheckDays(n){
+  var out=[];
+  for(var i=n-1;i>=0;i--){var d=new Date();d.setDate(d.getDate()-i);out.push(todayStr(d));}
+  return out;
+}
+function selfCheckData(){
+  var dayList=selfCheckDays(7), from=dayList[0], to=dayList[dayList.length-1], out=[];
+  out.push('【统计区间】'+from+' 至 '+to);
+
+  var gs=STATE.goals||[];
+  if(gs.length){
+    out.push('【目标】'+gs.map(function(g){
+      var ts=(STATE.todos||[]).filter(function(t){return t.goalId===g.id;});
+      var dn=ts.filter(function(t){return t.done;}).length;
+      return (g.title||'未命名')+'（'+dn+'/'+ts.length+' 步完成）';
+    }).join('；'));
+  }else{out.push('【目标】还没有建目标');}
+
+  var hs=STATE.habits||[];
+  if(hs.length){
+    out.push('【习惯·最近7天】'+hs.map(function(h){
+      var n=dayList.filter(function(d){return h.logs&&h.logs[d];}).length;
+      var total=Object.keys(h.logs||{}).length;
+      var streak=0, d=new Date();
+      while(h.logs&&h.logs[todayStr(d)]){streak++;d.setDate(d.getDate()-1);}
+      return (h.name||'未命名')+'：最近7天 '+n+'/7，连续 '+streak+' 天，累计 '+total+' 次';
+    }).join('；'));
+  }else{out.push('【习惯】还没有添加习惯');}
+
+  var tds=(STATE.todos||[]).filter(function(t){return t.date>=from&&t.date<=to;});
+  var tdone=tds.filter(function(t){return t.done;}).length;
+  out.push('【待办·最近7天】共 '+tds.length+' 条，完成 '+tdone+' 条，完成率 '+(tds.length?Math.round(tdone/tds.length*100)+'%':'—'));
+  var overdue=(STATE.todos||[]).filter(function(t){return t.date<to&&!t.done&&!t.flexible;});
+  if(overdue.length){
+    out.push('【逾期未完成】共 '+overdue.length+' 条，前 15 条：'+overdue.slice(0,15).map(function(t){return (t.date||'')+' '+(t.text||'').slice(0,40);}).join(' | '));
+  }
+
+  var cs=STATE.cases||[];
+  if(cs.length){
+    out.push('【案件台账】共 '+cs.length+' 件，未结 '+cs.filter(function(c){return !c.closed;}).length+' 件');
+    out.push(cs.map(function(c){
+      var ms=(c.measures||[]).slice(-3).map(function(m){return (m.date||'')+(m.type?(' '+m.type):'')+(m.result?('/'+m.result):'');}).join('、');
+      return '· 案号 '+(c.no||'未填')+'｜'+(c.court||'法院未填')+'｜申请执行人 '+(c.app||'未填')+'｜被执行人 '+(c.res||'未填')+'｜标的 '+(c.amount||'未填')+'｜阶段 '+(c.stage||'未填')+'｜立案 '+(c.filedAt||'—')+'｜期限 '+(c.dueAt||'—')+(c.closed?'｜已结案':'')+(ms?'｜最近措施 '+ms:'｜无措施记录');
+    }).join('\n'));
+  }else{out.push('【案件台账】还没有录入案件');}
+
+  var drs=(STATE.dailyReviews||[]).filter(function(r){return r.date>=from&&r.date<=to;}).sort(function(a,b){return a.date<b.date?-1:1;});
+  if(drs.length){
+    out.push('【最近7天每日复盘】');
+    drs.forEach(function(r){
+      out.push('· '+r.date+'｜事实：'+(r.fact||'—')+'｜主要矛盾：'+(r.conflict||'—')+'｜信息缺口：'+(r.info||'—')+'｜下一步：'+(r.next||'—'));
+    });
+  }else{out.push('【每日复盘】最近7天没有记录');}
+
+  var ins=(STATE.inputs||[]).length, outs=(STATE.outputs||[]).length;
+  out.push('【输入输出闭环】累计输入 '+ins+' 条，输出 '+outs+' 条，转化率 '+(ins?Math.round(outs/ins*100)+'%':'—'));
+  return out.join('\n');
+}
+function aiSelfCheck(){
+  var keyEl=document.getElementById('ai-key');
+  var key=keyEl?keyEl.value:'';
+  if(!key){alert('请先在「🎯 长期目标」的 ⚙️ AI 设置里填写 DeepSeek Key');return;}
+  var proxyEl=document.getElementById('ai-proxy');
+  var proxy=proxyEl?proxyEl.value.trim():'';
+  var st=document.getElementById('selfcheck-status');
+  var box=document.getElementById('selfcheck-out');
+  var data=selfCheckData();
+  if(st)st.textContent='正在读取工作台数据并分析…';
+  var url='https://api.deepseek.com/chat/completions';
+  var headers={'Content-Type':'application/json','Authorization':'Bearer '+key};
+  var body={model:'deepseek-chat',temperature:0.5,messages:[
+    {role:'system',content:'你是一个不讲情面的自我检查教练。用户给你他最近的工作台数据：目标进度、习惯打卡、逾期待办、执行案件台账、每日复盘、输入输出统计。你的任务是检查这个人的执行状态。硬性要求：不许客套，不许复述数据，不许给通用鸡汤或网上抄来的建议；每一条判断都必须引用数据里出现过的具体数字、案号、被执行人或习惯名；只输出中文短句。'},
+    {role:'user',content:'以下是我最近的工作台数据：\n\n'+data+'\n\n请严格按下面五段输出，每段一到三句话，总字数不超过 600 字：\n1. 【事实】用数据说我这两周实际做了什么，只摆事实，不评价。\n2. 【三个最突出的问题】按严重程度从高到低排，每条必须引用上面的具体数字、案号或习惯名。\n3. 【主要矛盾】这几个问题里哪个是根子，为什么它带得出其他问题。\n4. 【下周只打一个点】给出一个具体动作，写清做什么、做几次、做到什么算完成。\n5. 【一句提醒】不客套，直接说。'}
+  ]};
+  var opt;
+  if(proxy){opt={method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({url:url,headers:headers,body:body})};}
+  else{opt={method:'POST',headers:headers,body:JSON.stringify(body)};}
+  fetch(proxy||url,opt)
+    .then(function(r){return r.json();})
+    .then(function(res){
+      var c='';
+      try{c=res&&res.choices&&res.choices[0]&&res.choices[0].message?res.choices[0].message.content:'';}catch(e){c='';}
+      if(!c)throw new Error('返回为空');
+      if(box){box.style.display='block';box.textContent=c.trim();}
+      if(st)st.textContent='自检完成 · '+new Date().toLocaleTimeString();
+    })
+    .catch(function(e){
+      if(st)st.textContent='自检失败：'+e.message+'（本地直连若被跨域拦截，请在 AI 设置里填代理地址）';
+    });
+}
 function renderDaily(){
   var box=document.getElementById('dr-list'); if(!box)return;
   var s=document.getElementById('dr-search');
@@ -1872,7 +2002,7 @@ const APP_ICON='data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAQAAAAEACAYAAABccq
 
 /* ---------- 轻提示 / 震动 ---------- */
 /* 版本标识：每次改动本文件时改这里——在线版会自动提示手机更新 */
-const BUILD_ID='v7-2026-09-14';
+const BUILD_ID='v8-2026-09-16';
 let toastEl=null,toastTimer=null;
 function toast(msg,ms){
   if(!toastEl){toastEl=document.createElement('div');toastEl.className='m-toast';document.body.appendChild(toastEl);}
