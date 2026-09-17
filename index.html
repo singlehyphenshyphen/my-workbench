@@ -383,6 +383,10 @@ body[data-mtheme="dark"] ::-webkit-scrollbar-thumb{background:#334055}
 .more-tools{margin-top:16px}
 .more-tools>summary{cursor:pointer;color:var(--accent);font-size:.9em;padding:10px 2px;font-weight:600}
 .more-tools[open]>summary{margin-bottom:8px}
+.habit-rename{font:inherit;font-weight:600;padding:3px 7px;border:1px solid var(--accent);border-radius:6px;outline:none;width:min(62vw,240px);background:#fff;color:var(--text)}
+[data-rename]{cursor:text}
+[data-rename]:hover{color:var(--accent)}
+.m-row-txt[data-rename]{cursor:text}
 </style>
 </head>
 <body data-page-node-id="UjAMhdxRHXQhkKm5DgqWbY">
@@ -943,7 +947,7 @@ function renderHabits(){
     const goalTitle=g?g.title:'';
     const goalShort=goalTitle.length>10?goalTitle.slice(0,10)+'…':goalTitle;
     const goalTag=g?'<span class="tag" title="'+esc(goalTitle)+'">⊙ '+esc(goalShort)+'</span>':'';
-    return '<div class="card"><div class="habit-item"><span class="name">'+goalTag+' '+esc(h.name)+'</span>'+
+    return '<div class="card"><div class="habit-item"><span class="name" data-rename="'+h.id+'" onclick="renameHabit('+h.id+',event)" title="点一下改名字">'+goalTag+' '+esc(h.name)+'</span>'+
       '<span style="display:flex;gap:6px"><button class="btn btn-sm '+(done?'btn-success':'btn-ghost')+'" onclick="toggleHabit('+h.id+')">'+(done?'✓ 已打卡':'打卡')+'</button>'+
       '<button class="btn btn-sm btn-ghost" onclick="toggleDetail('+h.id+')">📋 明细</button>'+
       '<button class="btn btn-sm btn-danger" onclick="delHabit('+h.id+')">删除</button></span></div>'+detail+'</div>';
@@ -952,6 +956,29 @@ function renderHabits(){
 }
 function toggleHabit(id){const h=STATE.habits.find(x=>x.id==id);const t=todayStr();if(h){h.logs[t]=!h.logs[t];save('habits');renderHabits();renderDash();}}
 function toggleDetail(id){const h=STATE.habits.find(x=>x.id==id);h._open=!h._open;renderHabits();}
+/* 就地改习惯名称：点名字变输入框，回车/失焦保存，Esc 取消 */
+function renameHabit(id,ev){
+  if(ev&&ev.stopPropagation)ev.stopPropagation();
+  const h=STATE.habits.find(x=>x.id==id);
+  if(!h)return;
+  const box=document.querySelector('[data-rename="'+id+'"]');
+  if(!box||box.querySelector('input'))return;
+  const old=h.name;
+  box.innerHTML='<input class="habit-rename" type="text">';
+  const inp=box.querySelector('input');
+  inp.value=old;inp.focus();inp.select();
+  let done=false;
+  const finish=function(ok){
+    if(done)return;done=true;
+    if(ok){const v=inp.value.trim();if(v&&v!==old){h.name=v;save('habits');}}
+    renderHabits();renderDash();
+  };
+  inp.addEventListener('keydown',function(e){
+    if(e.key==='Enter'){e.preventDefault();finish(true);}
+    else if(e.key==='Escape'){e.preventDefault();finish(false);}
+  });
+  inp.addEventListener('blur',function(){finish(true);});
+}
 function delHabit(id){const h=STATE.habits.find(x=>x.id==id);if(!confirm('删除习惯「'+h.name+'」？\n历史打卡记录（'+Object.keys(h.logs).length+' 天）会一并删除。'))return;STATE.habits=STATE.habits.filter(x=>x.id!=id);save('habits');renderHabits();renderDash();}
 function renderHeat(){
   let html='<div style="display:flex;flex-wrap:wrap;gap:2px">';
@@ -2002,7 +2029,7 @@ const APP_ICON='data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAQAAAAEACAYAAABccq
 
 /* ---------- 轻提示 / 震动 ---------- */
 /* 版本标识：每次改动本文件时改这里——在线版会自动提示手机更新 */
-const BUILD_ID='v8-2026-09-16';
+const BUILD_ID='v9-2026-09-17';
 let toastEl=null,toastTimer=null;
 function toast(msg,ms){
   if(!toastEl){toastEl=document.createElement('div');toastEl.className='m-toast';document.body.appendChild(toastEl);}
@@ -2172,7 +2199,7 @@ function mHabitRow(h,today){
   const done=!!h.logs[today];const st=streakOf(h);
   return '<div class="m-row" data-habit="'+h.id+'">'+
     '<button class="m-check '+(done?'on':'')+'" aria-label="打卡">'+(done?'✓':'')+'</button>'+
-    '<div class="m-row-main"><div class="m-row-txt">'+esc(h.name)+'</div>'+
+    '<div class="m-row-main"><div class="m-row-txt" data-rename="'+h.id+'" onclick="renameHabit('+h.id+',event)" title="点一下改名字">'+esc(h.name)+'</div>'+
     '<div class="m-row-meta"><span>'+(done?'今天已打卡':'点一下完成打卡')+'</span>'+(st?'<span>🔥 '+st+' 天</span>':'')+'</div></div></div>';
 }
 function mHeroHTML(){
