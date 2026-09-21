@@ -201,8 +201,40 @@ body[data-mtheme="dark"] ::-webkit-scrollbar-thumb{background:#334055}
 .m-update button{border:none;background:#fff;color:#1f2d3d;border-radius:10px;padding:9px 14px;font-family:inherit;
   font-size:.95em;font-weight:700;cursor:pointer;white-space:nowrap}
 
+/* ---------- 通用列表行（两端共用：手机端仪表盘 / 电脑端「今日习惯」卡 / 快速打卡面板） ---------- */
+.m-card-list{display:flex;flex-direction:column;gap:9px}
+.m-row{display:flex;align-items:center;gap:11px;min-height:60px;padding:8px 12px 8px 10px;background:var(--card);
+  border:1px solid var(--border);border-radius:15px;transition:.15s}
+.m-row:active{transform:scale(.985)}
+.m-row-main{flex:1;min-width:0}
+.m-row-txt{font-size:1.02em;line-height:1.4;word-break:break-word}
+.m-row-txt.done{color:var(--muted);text-decoration:line-through}
+.m-row-meta{display:flex;flex-wrap:wrap;gap:9px;font-size:.76em;color:var(--muted);margin-top:3px}
+.m-check{width:27px;height:27px;flex-shrink:0;border-radius:50%;border:2px solid #cfd7e6;background:transparent;color:#fff;
+  display:flex;align-items:center;justify-content:center;font-size:15px;line-height:1;padding:0;transition:.16s;pointer-events:none}
+body[data-mtheme="dark"] .m-check{border-color:#3b475c}
+.m-check.big{width:34px;height:34px;font-size:17px}
+.m-check.on{background:var(--success);border-color:var(--success);box-shadow:0 3px 10px rgba(31,157,97,.28)}
+.m-icon-btn{width:40px;height:40px;flex-shrink:0;border:none;border-radius:12px;background:transparent;color:var(--muted);
+  font-size:15px;line-height:1;cursor:pointer;font-family:inherit}
+.m-icon-btn:active{background:var(--accent-soft);color:var(--danger)}
+.m-empty{text-align:center;color:var(--muted);font-size:.9em;padding:18px 10px;line-height:1.7}
+.m-empty-tip{font-size:.86em;opacity:.8}
+.m-fire{font-size:.82em;font-weight:700;color:var(--danger);background:rgba(229,83,75,.1);padding:4px 9px;border-radius:999px;flex-shrink:0}
+
 /* 仅手机端出现的元素：桌面隐藏 */
-@media (min-width:761px){.m-hero,.m-fab,.m-toast,.m-sheet2,.m-jump,.m-add-toggle,.m-acc,#m-habits-card{display:none !important}}
+@media (min-width:761px){.m-hero,.m-fab,.m-toast,.m-sheet2,.m-jump,.m-add-toggle,.m-acc{display:none !important}}
+
+/* 电脑端仪表盘：四宫格 2×2 +「今日习惯」卡紧凑排布 */
+@media (min-width:761px){
+  #dash-cards{grid-template-columns:1fr 1fr}
+  #m-habits-card .m-card-list{gap:7px}
+  #m-habits-card .m-row{min-height:44px;padding:6px 10px;gap:10px;border-radius:12px;cursor:pointer}
+  #m-habits-card .m-row:hover{border-color:var(--accent);box-shadow:var(--shadow-hover)}
+  #m-habits-card .m-row-txt{font-size:.95em}
+  #m-habits-card .m-check{width:22px;height:22px;font-size:12px}
+  #m-habits-card .m-empty{padding:12px 6px}
+}
 
 @media (max-width:760px){
   body{-webkit-tap-highlight-color:transparent;touch-action:manipulation}
@@ -245,26 +277,7 @@ body[data-mtheme="dark"] ::-webkit-scrollbar-thumb{background:#334055}
   .m-qa button:active{transform:scale(.94);background:rgba(255,255,255,.28)}
   .m-qa .ic{font-size:19px;line-height:1}
 
-  /* ---------- 通用列表行 ---------- */
-  .m-card-list{display:flex;flex-direction:column;gap:9px}
-  .m-row{display:flex;align-items:center;gap:11px;min-height:60px;padding:8px 12px 8px 10px;background:var(--card);
-    border:1px solid var(--border);border-radius:15px;transition:.15s}
-  .m-row:active{transform:scale(.985)}
-  .m-row-main{flex:1;min-width:0}
-  .m-row-txt{font-size:1.02em;line-height:1.4;word-break:break-word}
-  .m-row-txt.done{color:var(--muted);text-decoration:line-through}
-  .m-row-meta{display:flex;flex-wrap:wrap;gap:9px;font-size:.76em;color:var(--muted);margin-top:3px}
-  .m-check{width:27px;height:27px;flex-shrink:0;border-radius:50%;border:2px solid #cfd7e6;background:transparent;color:#fff;
-    display:flex;align-items:center;justify-content:center;font-size:15px;line-height:1;padding:0;transition:.16s;pointer-events:none}
-  body[data-mtheme="dark"] .m-check{border-color:#3b475c}
-  .m-check.big{width:34px;height:34px;font-size:17px}
-  .m-check.on{background:var(--success);border-color:var(--success);box-shadow:0 3px 10px rgba(31,157,97,.28)}
-  .m-icon-btn{width:40px;height:40px;flex-shrink:0;border:none;border-radius:12px;background:transparent;color:var(--muted);
-    font-size:15px;line-height:1;cursor:pointer;font-family:inherit}
-  .m-icon-btn:active{background:var(--accent-soft);color:var(--danger)}
-  .m-empty{text-align:center;color:var(--muted);font-size:.9em;padding:18px 10px;line-height:1.7}
-  .m-empty-tip{font-size:.86em;opacity:.8}
-  .m-fire{font-size:.82em;font-weight:700;color:var(--danger);background:rgba(229,83,75,.1);padding:4px 9px;border-radius:999px;flex-shrink:0}
+  /* 通用列表行（.m-card-list / .m-row / .m-check / .m-empty / .m-fire）已提升为全局样式，见上方 */
   .m-expand{width:100%;margin-top:8px;min-height:42px;border:1px dashed var(--border);background:transparent;color:var(--muted);
     border-radius:13px;font-family:inherit;font-size:.86em;font-weight:600;cursor:pointer}
   .m-expand:active{background:var(--accent-soft);color:var(--accent)}
@@ -421,7 +434,7 @@ body[data-mtheme="dark"] ::-webkit-scrollbar-thumb{background:#334055}
 
     <div id="dashboard" class="view active" data-page-node-id="6FEHq3BDSwocTcIRi0MUEn">
       <div class="grid-3" id="dash-stats" data-page-node-id="yXfIEicurr9eacVIdY38Uy"></div>
-      <div class="grid-3" data-page-node-id="RnlYSmZaVatNMA6VzLRjDQ">
+      <div class="grid-3" id="dash-cards" data-page-node-id="RnlYSmZaVatNMA6VzLRjDQ">
         <div class="card" data-page-node-id="qbUiLyICsrfDeVoBek19dE"><h3 data-page-node-id="PcnrlRoLyCTy3cCaOEUJlD">📋 今日待办</h3><div id="dash-todos" data-page-node-id="Oz8CtBNAluPpYgYnMwdzC6"></div></div>
         <div class="card" data-page-node-id="yoqJPKwiEtntUK5pFh1joF"><h3 data-page-node-id="dRFyId4TewLNQtApScHiXf">📌 有空就做</h3><div id="dash-flex" data-page-node-id="q6YXSloVZN2MA99gg1eHow"></div></div>
         <div class="card" data-page-node-id="w6tuEKGJcq237UCIdLqTnd"><h3 data-page-node-id="LKzSfQu3PzLusjrkwf2Wqe">🎯 目标进度</h3><div id="dash-goals" data-page-node-id="bP2HNyP2r8PFSSsGphDpYB"></div></div>
@@ -711,11 +724,9 @@ function renderDash(){
     while(h.logs[todayStr(d)]){s++;d.setDate(d.getDate()-1);}
     return Math.max(m,s);
   },0);
-  const doneHabits=STATE.habits.filter(h=>h.logs[today]).length;
   const stats=[
     {num:(totalToday?Math.round(doneToday/totalToday*100)+'%':'—'),lbl:'今日完成率 ('+doneToday+'/'+totalToday+')'},
     {num:maxStreak,lbl:'最高连击 🔥'},
-    {num:doneHabits+'/'+STATE.habits.length,lbl:'今日习惯打卡'},
     {num:STATE.goals.length,lbl:'进行中目标'}
   ];
   document.getElementById('dash-stats').innerHTML=stats.map(s=>'<div class="card stat"><div class="num">'+s.num+'</div><div class="lbl">'+s.lbl+'</div></div>').join('');
@@ -2029,7 +2040,7 @@ const APP_ICON='data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAQAAAAEACAYAAABccq
 
 /* ---------- 轻提示 / 震动 ---------- */
 /* 版本标识：每次改动本文件时改这里——在线版会自动提示手机更新 */
-const BUILD_ID='v9-2026-09-17';
+const BUILD_ID='v10-2026-09-21';
 let toastEl=null,toastTimer=null;
 function toast(msg,ms){
   if(!toastEl){toastEl=document.createElement('div');toastEl.className='m-toast';document.body.appendChild(toastEl);}
@@ -2195,11 +2206,14 @@ function mTodoRow(t){
       ((t.time&&!t.flexible)||g?'<div class="m-row-meta">'+(t.time&&!t.flexible?'<span>🕐 '+esc(t.time)+'</span>':'')+(g?'<span>⊙ '+esc(g.title)+'</span>':'')+'</div>':'')+
     '</div><button class="m-icon-btn" data-del="'+t.id+'" aria-label="删除">✕</button></div>';
 }
-function mHabitRow(h,today){
+function mHabitRow(h,today,noRename){
   const done=!!h.logs[today];const st=streakOf(h);
+  const name=noRename
+    ? '<div class="m-row-txt">'+esc(h.name)+'</div>'
+    : '<div class="m-row-txt" data-rename="'+h.id+'" onclick="renameHabit('+h.id+',event)" title="点一下改名字">'+esc(h.name)+'</div>';
   return '<div class="m-row" data-habit="'+h.id+'">'+
     '<button class="m-check '+(done?'on':'')+'" aria-label="打卡">'+(done?'✓':'')+'</button>'+
-    '<div class="m-row-main"><div class="m-row-txt" data-rename="'+h.id+'" onclick="renameHabit('+h.id+',event)" title="点一下改名字">'+esc(h.name)+'</div>'+
+    '<div class="m-row-main">'+name+
     '<div class="m-row-meta"><span>'+(done?'今天已打卡':'点一下完成打卡')+'</span>'+(st?'<span>🔥 '+st+' 天</span>':'')+'</div></div></div>';
 }
 function mHeroHTML(){
@@ -2234,8 +2248,10 @@ function mHeroHTML(){
 }
 function mDash(){
   _renderDash();
-  if(!isM())return;
   const today=todayStr();
+  renderDashHabits(today);   // 习惯卡两端共用：只列今天还没打卡的
+  setDashOrder();            // 卡片顺序按当前端设置
+  if(!isM())return;
   const hero=el('m-hero');if(hero)hero.innerHTML=mHeroHTML();
   const todos=STATE.todos.filter(t=>t.date===today&&!t.flexible)
     .sort((a,b)=>(a.done?1:0)-(b.done?1:0)||String(a.time||'zz').localeCompare(String(b.time||'zz')));
@@ -2246,9 +2262,33 @@ function mDash(){
   const fbox=el('dash-flex');
   if(fbox)fbox.innerHTML=flex.length?'<div class="m-card-list">'+flex.map(mTodoRow).join('')+'</div>'
     :emptyHTML('暂无 🤙','想到什么先丢进来，有空再做');
-  const hbox=el('m-habits-body');
-  if(hbox)hbox.innerHTML=STATE.habits.length?'<div class="m-card-list">'+STATE.habits.map(h=>mHabitRow(h,today)).join('')+'</div>'
-    :emptyHTML('还没有习惯','在「习惯」页添加，或让 AI 拆解目标自动生成');
+}
+
+/* 仪表盘「今日习惯」卡：只列今天还没打卡的习惯；全部打完显示一句祝贺 */
+function renderDashHabits(today){
+  const card=el('m-habits-card');if(!card)return;
+  const list=STATE.habits;
+  const doneN=list.filter(h=>h.logs[today]).length;
+  const h3=card.querySelector('h3');
+  if(h3)h3.textContent='✅ 今日习惯'+(list.length?' '+doneN+'/'+list.length:'');
+  const box=el('m-habits-body');if(!box)return;
+  if(!list.length){box.innerHTML=emptyHTML('还没有习惯','去「✅ 习惯打卡」页添加一个');return;}
+  const left=list.filter(h=>!h.logs[today]);
+  if(!left.length){box.innerHTML=emptyHTML('今天全部完成 🎉','明天继续保持');return;}
+  // 仪表盘这张卡只干一件事：点一下打卡。所以名字不挂改名入口（改名去「✅ 习惯打卡」页）
+  box.innerHTML='<div class="m-card-list">'+left.map(h=>mHabitRow(h,today,true)).join('')+'</div>';
+}
+
+/* 卡片顺序：手机端习惯卡排最前（一打开就看得到），电脑端今日待办排第一 */
+function setDashOrder(){
+  const order=isM()
+    ?{'m-habits-card':1,'dash-todos':2,'dash-flex':3,'dash-goals':4}
+    :{'dash-todos':1,'m-habits-card':2,'dash-flex':3,'dash-goals':4};
+  Object.keys(order).forEach(function(id){
+    const n=el(id);if(!n)return;
+    const card=n.closest('.card')||n;
+    card.style.order=String(order[id]);
+  });
 }
 
 /* ---------- 习惯页 ---------- */
@@ -2699,9 +2739,7 @@ function initMobileUI(){
     c.innerHTML='<h3>✅ 今日习惯</h3><div id="m-habits-body"></div>';
     g3.appendChild(c);
   }
-  [['dash-todos',1],['m-habits-card',2],['dash-flex',3],['dash-goals',4]].forEach(function(p){
-    const n=el(p[0]);if(n){const card=n.closest('.card')||n;card.style.order=String(p[1]);}
-  });
+  // 卡片顺序交给 setDashOrder()（每次渲染按当前端设置，手机/电脑不同）
   goalsForm=collapseForm('goals','＋ 新建目标 / AI 拆解',false);
   collapseForm('calendar','＋ 添加待办',true);
   insertJumpBar();
