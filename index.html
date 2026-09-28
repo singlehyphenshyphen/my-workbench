@@ -140,7 +140,6 @@ textarea{min-height:72px;resize:vertical}
 .tag.done{background:#e6f7ef;color:var(--success)}
 .streak{color:var(--danger);font-weight:600}
 .empty{color:var(--muted);font-size:.85em;padding:8px 0}
-.hint{background:#fff8e1;border-left:4px solid var(--warning);padding:11px 14px;border-radius:8px;font-size:.88em;margin-bottom:14px;color:#6b5110}
 .section-title{font-size:.88em;color:var(--muted);margin:18px 0 9px;border-bottom:1px solid var(--border);padding-bottom:5px;font-weight:600}
 .pbar{height:7px;background:var(--border);border-radius:4px;overflow:hidden;margin:6px 0}
 .pfill{height:100%;background:linear-gradient(90deg,var(--accent),#7c8be8);transition:width .4s;border-radius:4px}
@@ -184,7 +183,6 @@ body[data-mtheme="dark"]{
 body[data-mtheme="dark"] input,body[data-mtheme="dark"] textarea,body[data-mtheme="dark"] select{background:#1a2130;color:var(--text)}
 body[data-mtheme="dark"] .tag{background:#1e3350;color:#8ab4f8}
 body[data-mtheme="dark"] .tag.done{background:#14372a;color:#5fd39b}
-body[data-mtheme="dark"] .hint{background:#2a2413;border-left-color:#a6801c;color:#e6cd85}
 body[data-mtheme="dark"] .cal-day{background:#1a2130}
 body[data-mtheme="dark"] .cal-day.has{background:#33291a;border-color:#5a4a26}
 body[data-mtheme="dark"] .nav-item{color:#b8c3d6}
@@ -223,7 +221,7 @@ body[data-mtheme="dark"] .m-check{border-color:#3b475c}
 .m-fire{font-size:.82em;font-weight:700;color:var(--danger);background:rgba(229,83,75,.1);padding:4px 9px;border-radius:999px;flex-shrink:0}
 
 /* 仅手机端出现的元素：桌面隐藏 */
-@media (min-width:761px){.m-hero,.m-fab,.m-toast,.m-sheet2,.m-jump,.m-add-toggle,.m-acc{display:none !important}}
+@media (min-width:761px){.m-hero,.m-fab,.m-toast,.m-sheet2,.m-add-toggle{display:none !important}}
 
 /* 电脑端仪表盘：四宫格 2×2 +「今日习惯」卡紧凑排布 */
 @media (min-width:761px){
@@ -312,22 +310,6 @@ body[data-mtheme="dark"] .m-check{border-color:#3b475c}
     border-radius:16px;font-family:inherit;font-size:.98em;font-weight:600;cursor:pointer;margin-bottom:12px}
   .m-add-toggle:active{background:var(--accent-soft)}
   .m-form-hidden{display:none !important}
-
-  /* ---------- 折叠分组（复盘 / 目标表单） ---------- */
-  .m-acc{display:flex;align-items:center;justify-content:space-between;gap:10px;width:100%;min-height:50px;
-    background:var(--card);border:1px solid var(--border);border-radius:16px;padding:12px 14px;margin:10px 0 0;
-    font-family:inherit;font-size:.98em;font-weight:600;color:var(--primary);cursor:pointer;box-shadow:var(--shadow)}
-  .m-acc .c{color:var(--muted);font-size:.8em;font-weight:400}
-  .m-acc-body{margin-top:10px}
-  .m-acc-body>.card:first-child{margin-top:0}
-
-  /* ---------- 复盘顶部快速跳转 ---------- */
-  .m-jump{display:flex;gap:8px;overflow-x:auto;-webkit-overflow-scrolling:touch;padding:6px 0 12px;position:sticky;top:0;
-    top:calc(env(safe-area-inset-top,0px));z-index:30;
-    background:linear-gradient(var(--bg) 68%,rgba(255,255,255,0));backdrop-filter:blur(4px)}
-  .m-jump button{flex-shrink:0;min-height:40px;padding:8px 15px;border:1px solid var(--border);background:var(--card);
-    color:var(--text);border-radius:999px;font-family:inherit;font-size:.86em;font-weight:600;cursor:pointer}
-  .m-jump button:active{background:var(--accent-soft);color:var(--accent)}
 
   /* ---------- 悬浮「＋」按钮 ---------- */
   .m-fab{position:fixed;right:16px;bottom:calc(84px + env(safe-area-inset-bottom));z-index:72;width:56px;height:56px;border:none;
@@ -437,13 +419,7 @@ select.case-stage{width:auto;font:inherit;font-size:.76em;padding:2px 4px;margin
 .book-note-txt:hover{color:var(--accent)}
 .book-actions{display:flex;gap:6px;flex-wrap:wrap;align-items:center;margin-top:8px}
 
-/* ===== 每日复盘 + 案件待办联动（v6 新增） ===== */
-.dr-mat{background:var(--bg);border:1px dashed var(--border);border-radius:10px;padding:9px 11px;margin-bottom:9px;font-size:.83em;color:#3d4b63;line-height:1.7}
-.dr-mat b{color:var(--primary)}
-.dr-mat .dr-gap{color:var(--muted)}
-.more-tools{margin-top:16px}
-.more-tools>summary{cursor:pointer;color:var(--accent);font-size:.9em;padding:10px 2px;font-weight:600}
-.more-tools[open]>summary{margin-bottom:8px}
+/* ===== 通用小控件 ===== */
 .habit-rename{font:inherit;font-weight:600;padding:3px 7px;border:1px solid var(--accent);border-radius:6px;outline:none;width:min(62vw,240px);background:#fff;color:var(--text)}
 [data-rename]{cursor:text}
 [data-rename]:hover{color:var(--accent)}
@@ -467,9 +443,8 @@ select.case-stage{width:auto;font:inherit;font-size:.76em;padding:2px 4px;margin
     <div class="nav-group" data-page-node-id="TM3Ozwce8eRsWsLtuVh7CC"><div class="nav-group-title" data-page-node-id="l0y9NBBgR7utzDzIGE0eAA">③ 日历待办</div>
       <div class="nav-item" onclick="show('calendar',this)" data-page-node-id="KSNyWQxTh3LkZk8Hwq00pc">📅 日历待办</div>
     </div>
-    <div class="nav-group" data-page-node-id="eoMP9CZdLDCs0a6NzZsfFE"><div class="nav-group-title" data-page-node-id="KvDFiXvgy8YIiRTUF6LYB4">④ 复盘输出 / 工作</div>
+    <div class="nav-group" data-page-node-id="eoMP9CZdLDCs0a6NzZsfFE"><div class="nav-group-title" data-page-node-id="KvDFiXvgy8YIiRTUF6LYB4">④ 复盘输出</div>
       <div class="nav-item" onclick="show('review',this)" data-page-node-id="ddaayu5ZkBuZh0ne2U0eLm">🔍 复盘中心</div>
-      <div class="nav-item" onclick="show('work',this)" data-page-node-id="qObgstUfBFWckUPJb0LIE0">💼 工作分析</div>
       <div class="nav-item" onclick="show('backup',this)" data-page-node-id="UN4Q12sjsGOByEaz14Wlou">💾 备份</div>
     </div>
     <div class="side-ver" id="side-ver">🏷️ 手机优化版 v3</div>
@@ -545,7 +520,7 @@ select.case-stage{width:auto;font:inherit;font-size:.76em;padding:2px 4px;margin
     <div id="review" class="view" data-page-node-id="dpe4Q68TTPGif8e0p7Bwad">
       <div class="card" style="border-left:3px solid var(--success)">
         <h3>📚 读书笔记</h3>
-        <p class="meta" style="margin-bottom:8px">一本书一张卡：记下读到的观点，再写一句你自己的思考 / 新角度。记一条就算一次输出，自动进下面的「输入 → 输出」统计。</p>
+        <p class="meta" style="margin-bottom:8px">一本书一张卡：记下读到的观点，再写一句你自己的思考 / 新角度。每记一条都算一次输出，累计在下面。</p>
         <div class="frm-grid">
           <input id="book-title" placeholder="书名"
             onkeydown="if(event.key==='Enter'){event.preventDefault();addBook();}">
@@ -554,96 +529,19 @@ select.case-stage{width:auto;font:inherit;font-size:.76em;padding:2px 4px;margin
         <div class="row-actions">
           <button class="btn" onclick="addBook()">＋ 添加这本书</button>
         </div>
+        <p class="meta" id="io-stats" style="margin-top:8px"></p>
       </div>
       <div id="book-list"></div>
 
       <div class="card" style="border-left:3px solid var(--accent)">
         <h3>🧠 AI 自检</h3>
-        <p class="meta" style="margin-bottom:8px">把最近 7 天的习惯打卡、逾期待办、客户分析、每日复盘和输入输出统计一起交给 AI，让它指出问题、找出主要矛盾、定下周只打的那一个点。客户数据按客户名字和「下一步」原样发送。</p>
+        <p class="meta" style="margin-bottom:8px">把最近 7 天的习惯打卡、逾期待办、客户分析、读书笔记一起交给 AI，让它指出问题、找出主要矛盾、定下周只打的那一个点。</p>
         <div class="row-actions">
           <button class="btn" onclick="aiSelfCheck()">🧠 跑一次自检</button>
         </div>
         <p class="meta" id="selfcheck-status" style="margin-top:6px"></p>
         <div id="selfcheck-out" style="display:none;white-space:pre-wrap;background:var(--bg);padding:10px;border-radius:8px;margin-top:8px;line-height:1.8;font-size:.9em"></div>
       </div>
-
-      <details class="more-tools">
-        <summary>📖 每日深挖（五问，选填）</summary>
-      <div class="card">
-        <h3 style="display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap">
-          <span>📝 每日复盘</span>
-          <input type="date" id="dr-date" style="width:auto;margin:0">
-        </h3>
-        <p class="meta" style="margin-bottom:8px">四个问题天天问同一套：先摆事实，再找主要矛盾，再看信息够不够，最后定下一步集中打哪一点。</p>
-        <div id="dr-material" class="dr-mat"></div>
-        <textarea id="dr-fact" placeholder="① 今天的事实（只写事实，不写评价）"></textarea>
-        <textarea id="dr-conflict" placeholder="② 主要矛盾（今天最卡的那一个点）"></textarea>
-        <textarea id="dr-info" placeholder="③ 信息够不够（还缺什么、去哪查）"></textarea>
-        <textarea id="dr-next" placeholder="④ 下一步集中打哪一点"></textarea>
-        <textarea id="dr-polished" placeholder="⑤ 整理稿（点下面 AI 整理生成，也可以自己写）"></textarea>
-        <div class="row-actions">
-          <button class="btn btn-success" onclick="saveDaily()">保存每日复盘</button>
-          <button class="btn" onclick="aiPolishDaily()">🪄 AI 整理成客观叙述</button>
-          <button class="btn btn-ghost" onclick="clearDaily()">清空</button>
-        </div>
-        <p class="meta" id="dr-status" style="margin-top:6px"></p>
-      </div>
-      </details>
-
-      <div class="section-title">📚 每日复盘记录</div>
-      <div class="card" style="padding:10px">
-        <input id="dr-search" placeholder="搜索关键词（矛盾、案号、当事人……）" oninput="renderDaily()">
-      </div>
-      <div id="dr-list"></div>
-
-      <details class="more-tools">
-      <summary>🧰 更多复盘工具（输出型剖析 / 批评与自我批评 / 输入输出闭环 / 按目标复盘）</summary>
-      <div class="hint" data-page-node-id="xLeIIgtG6w2FxhScHNYdE6">📌 <b data-page-node-id="5yJTeROrQTRD8tjPheGPoE">复盘原则：</b>以客观事实与结构为准，分析各方面各联系，深度大于长度，以输出型写作确认复盘效果。</div>
-      <div class="card" data-page-node-id="fj3kUaQCJs12zAangEsoeM">
-        <select id="rev-goal" data-page-node-id="C5KVNEzDokB58Z5cw0nIeJ"><option value="" data-page-node-id="1n5TaO7NTwNeAzBAWPcdnf">不绑定目标</option></select>
-        <textarea id="rev-body" placeholder="在此进行深度复盘：客观描述事实 → 拆解各因素与联系 → 深挖根因 → 得出可执行结论（无需模板，自由写作）"></textarea>
-        <button class="btn" onclick="saveReview()" data-page-node-id="1h20stf3ngnDF3zearuiMK">保存复盘</button>
-      </div>
-      <div class="section-title" data-page-node-id="yiz2ItEuANKl6dW8tkzKxh">🧠 输出型剖析</div>
-      <div class="card" data-page-node-id="BBHeSgkTbWRHVDqs4uUScy">
-        <input id="ana-title" placeholder="剖析主题" data-page-node-id="wrVwufrBfJKM1TCIkxRcNL">
-        <textarea id="ana-fact" placeholder="事实"></textarea>
-        <textarea id="ana-opp" placeholder="反方证据（为什么可能是错的？）"></textarea>
-        <textarea id="ana-why" placeholder="深挖 5Why"></textarea>
-        <textarea id="ana-action" placeholder="行动"></textarea>
-        <button class="btn" onclick="saveAnalysis()" data-page-node-id="CFY091B3NyO5im4tXfhuH0">保存剖析</button>
-      </div>
-      <div id="ana-list" data-page-node-id="TdZEgqc3nlXHe5g5AOdclf"></div>
-      <div class="section-title" data-page-node-id="7HVUeTFSk5r4JvzOY1X56R">⚖️ 批评与自我批评（4段）</div>
-      <div class="card" data-page-node-id="l1UOi5afbdau3QIKzTkOqE">
-        <textarea id="crit-do" placeholder="做了什么事"></textarea>
-        <textarea id="crit-result" placeholder="带来什么后果"></textarea>
-        <textarea id="crit-lesson" placeholder="给予什么教训"></textarea>
-        <textarea id="crit-avoid" placeholder="应该怎么规避"></textarea>
-        <button class="btn" onclick="saveCritique()" data-page-node-id="W6m5SDT3sW01H16y3FGQIg">保存自省</button>
-      </div>
-      <div id="crit-list" data-page-node-id="iUrCT1pKHhyhGWEPgHnZhK"></div>
-      <div class="section-title" data-page-node-id="n3a98zgwIdMd489gvYnJFx">🔄 输入 → 输出闭环</div>
-      <div class="grid-2" data-page-node-id="dB17pjFsBQIK0AnnhNGZJn">
-        <div class="card" data-page-node-id="7n24fF3E6CANomwa7l3XtW"><h3 data-page-node-id="GpPmezYTJbU5OLIrQaoL4R">📥 输入</h3><input id="in-source" placeholder="来源" data-page-node-id="I2hRFnUfA8yAi4RUSrIlth"><textarea id="in-note" placeholder="核心收获"></textarea><button class="btn" onclick="saveInput()" data-page-node-id="pklgzwzsLGYtVRMg0NsCDr">记录输入</button></div>
-        <div class="card" data-page-node-id="GHIskqDFhdCEIu9EwCBVCW"><h3 data-page-node-id="AtxHHaaZukTOkBivCYELNE">📤 输出</h3><input id="out-desc" placeholder="输出了什么" data-page-node-id="aa2VWHRTWJcakl65VfUCMG"><button class="btn" onclick="saveOutput()" data-page-node-id="7NWAbl3q4fMuvjNFeyYKv3">记录输出</button></div>
-      </div>
-      <div class="card" id="io-stats" data-page-node-id="kmic8tMyMhIJmxVdd4NRJD"></div>
-      <div class="section-title" data-page-node-id="41njPCcW8BHxtlEPDzcKmb">📚 已保存复盘（按目标分组）</div>
-      <div id="reviews-list" data-page-node-id="o8V94z4ukepnCjHjZ2jjCt"></div>
-      </details>
-    </div>
-
-    <div id="work" class="view" data-page-node-id="lkhXqY4MmSPj16kYRfLOf9">
-      <div class="card" data-page-node-id="G3CJqBEZIQKz6RRpT7lx1s">
-        <input id="work-topic" placeholder="分析主题" data-page-node-id="hKMw4uERsuAWLa8PLv5fhA">
-        <textarea id="work-client" placeholder="👥 客户：涉及谁、诉求、关系、影响"></textarea>
-        <textarea id="work-time" placeholder="⏰ 时间：时间线、节点、节奏、耗时"></textarea>
-        <textarea id="work-action" placeholder="🛠 措施：已采取/拟采取的措施"></textarea>
-        <button class="btn" onclick="aiWork()" data-page-node-id="tL6KXOHDEfgnA4gLmGRKWo">🤖 AI 深度分析</button>
-      </div>
-      <div class="card" id="work-result" style="display:none" data-page-node-id="c2tkml9yMtGZW7mL31tSYU"></div>
-      <div id="work-list" data-page-node-id="ysiYWw0mCQ8G4xlGXFtd6e"></div>
     </div>
 
     <div id="cases" class="view">
@@ -711,14 +609,8 @@ const STATE = {
   goals: JSON.parse(localStorage.getItem('wb_goals')||'[]'),
   habits: JSON.parse(localStorage.getItem('wb_habits')||'[]'),
   todos: JSON.parse(localStorage.getItem('wb_todos')||'[]'),
-  reviews: JSON.parse(localStorage.getItem('wb_reviews')||'[]'),
-  analyses: JSON.parse(localStorage.getItem('wb_analyses')||'[]'),
-  critiques: JSON.parse(localStorage.getItem('wb_critiques')||'[]'),
-  inputs: JSON.parse(localStorage.getItem('wb_inputs')||'[]'),
   outputs: JSON.parse(localStorage.getItem('wb_outputs')||'[]'),
-  works: JSON.parse(localStorage.getItem('wb_works')||'[]'),
   cases: JSON.parse(localStorage.getItem('wb_cases')||'[]'),
-  dailyReviews: JSON.parse(localStorage.getItem('wb_dailyReviews')||'[]'),
   books: JSON.parse(localStorage.getItem('wb_books')||'[]')
 };
 function save(k){localStorage.setItem('wb_'+k, JSON.stringify(STATE[k]));syncTouch();}
@@ -741,7 +633,7 @@ function show(id,el){
 }
 const renderMap = {
   dashboard:renderDash, goals:renderGoals,
-  calendar:renderCalendar, review:renderReview, work:renderWork, backup:()=>{},
+  calendar:renderCalendar, review:()=>{}, backup:()=>{},
   habits:()=>{backfillGoalHabits();renderHabits();}
 };
 
@@ -866,24 +758,20 @@ function delGoal(id){
   const g=STATE.goals.find(x=>x.id==id);
   const subTodos=STATE.todos.filter(t=>t.goalId==id).length;
   const subHabits=STATE.habits.filter(h=>h.goalId==id).length;
-  const subReviews=STATE.reviews.filter(r=>r.goalId==id).length;
   const parts=[];
   if(subTodos)parts.push(subTodos+' 条关联待办');
   if(subHabits)parts.push(subHabits+' 个关联习惯（含全部打卡记录）');
-  if(subReviews)parts.push(subReviews+' 篇关联复盘');
   const msg='确定删除目标「'+(g?g.title:'')+'」？\n'+(parts.length?'将一并删除：'+parts.join('、')+'。':'')+'\n此操作不可恢复。';
   if(!confirm(msg))return;
   STATE.goals=STATE.goals.filter(x=>x.id!=id);
   STATE.todos=STATE.todos.filter(t=>t.goalId!=id);
   STATE.habits=STATE.habits.filter(h=>h.goalId!=id);
-  STATE.reviews=STATE.reviews.filter(r=>r.goalId!=id);
-  save('goals');save('todos');save('habits');save('reviews');
-  renderGoals();renderDash();renderHabits();renderReview();refreshGoalSelectors();
+  save('goals');save('todos');save('habits');
+  renderGoals();renderDash();renderHabits();refreshGoalSelectors();
 }
 function refreshGoalSelectors(){
   const opts='<option value="">不绑定目标</option>'+STATE.goals.map(g=>'<option value="'+g.id+'">'+esc(g.title)+'</option>').join('');
   document.getElementById('todo-goal').innerHTML=opts;
-  document.getElementById('rev-goal').innerHTML=opts;
 }
 
 // 补建：为所有没有关联习惯的目标自动建一个同名习惯
@@ -1142,99 +1030,12 @@ function showDay(k){
     }).join(''):'<div class="empty">无待办</div>');
 }
 
-/* ---------- 复盘 ---------- */
-function saveReview(){
-  const body=document.getElementById('rev-body').value.trim();
-  if(!body)return;
-  STATE.reviews.push({id:Date.now(),body,goalId:document.getElementById('rev-goal').value||null,date:todayStr()});
-  save('reviews');document.getElementById('rev-body').value='';renderReview();renderDash();
-}
-function renderReview(){
-  const groups={};
-  STATE.reviews.forEach(r=>{const gid=r.goalId||'none';if(!groups[gid])groups[gid]=[];groups[gid].push(r);});
-  let html='';
-  Object.keys(groups).forEach(gid=>{
-    if(gid!=='none'){const g=STATE.goals.find(x=>x.id==gid);html+='<div class="card" style="border-left:4px solid var(--accent)"><b>🎯 围绕目标：'+(g?esc(g.title):'未知')+'</b></div>';}
-    html+=groups[gid].map(r=>'<div class="card"><div class="meta">'+esc(r.date)+'</div><p style="white-space:pre-wrap;margin-top:4px">'+esc(r.body)+'</p><button class="btn btn-sm btn-danger" onclick="delReview('+r.id+')">删除</button></div>').join('');
-  });
-  document.getElementById('reviews-list').innerHTML=html||'<div class="empty">暂无复盘，写下第一篇吧</div>';
-  renderAnalysis();renderCritique();renderIO();
-}
-function delReview(id){if(!confirm('删除这条复盘？'))return;STATE.reviews=STATE.reviews.filter(x=>x.id!=id);save('reviews');renderReview();}
-function saveAnalysis(){
-  if(!document.getElementById('ana-title').value.trim())return;
-  STATE.analyses.push({id:Date.now(),title:document.getElementById('ana-title').value,fact:document.getElementById('ana-fact').value,opp:document.getElementById('ana-opp').value,why:document.getElementById('ana-why').value,action:document.getElementById('ana-action').value,date:todayStr()});
-  save('analyses');['ana-title','ana-fact','ana-opp','ana-why','ana-action'].forEach(i=>document.getElementById(i).value='');renderAnalysis();
-}
-function renderAnalysis(){
-  document.getElementById('ana-list').innerHTML=STATE.analyses.slice(-8).reverse().map(a=>'<div class="card"><h4>'+esc(a.title)+'</h4><div class="meta">'+esc(a.date)+'</div><p><b>事实：</b>'+esc(a.fact)+'</p><p><b>反方：</b>'+esc(a.opp)+'</p><p><b>深挖：</b>'+esc(a.why)+'</p><p><b>行动：</b>'+esc(a.action)+'</p><button class="btn btn-sm btn-danger" onclick="delAnalysis('+a.id+')">删除</button></div>').join('')||'<div class="empty">暂无剖析</div>';
-}
-function delAnalysis(id){STATE.analyses=STATE.analyses.filter(x=>x.id!=id);save('analyses');renderAnalysis();}
-function saveCritique(){
-  if(!document.getElementById('crit-do').value.trim())return;
-  STATE.critiques.push({id:Date.now(),do:document.getElementById('crit-do').value,result:document.getElementById('crit-result').value,lesson:document.getElementById('crit-lesson').value,avoid:document.getElementById('crit-avoid').value,date:todayStr()});
-  save('critiques');['crit-do','crit-result','crit-lesson','crit-avoid'].forEach(i=>document.getElementById(i).value='');renderCritique();
-}
-function renderCritique(){
-  document.getElementById('crit-list').innerHTML=STATE.critiques.slice(-8).reverse().map(c=>'<div class="card"><div class="meta">'+esc(c.date)+'</div><p><b>做了什么：</b>'+esc(c.do)+'</p><p><b>后果：</b>'+esc(c.result)+'</p><p><b>教训：</b>'+esc(c.lesson)+'</p><p><b>规避：</b>'+esc(c.avoid)+'</p><button class="btn btn-sm btn-danger" onclick="delCritique('+c.id+')">删除</button></div>').join('')||'<div class="empty">暂无自省</div>';
-}
-function delCritique(id){STATE.critiques=STATE.critiques.filter(x=>x.id!=id);save('critiques');renderCritique();}
-function saveInput(){
-  if(!document.getElementById('in-note').value.trim())return;
-  STATE.inputs.push({id:Date.now(),source:document.getElementById('in-source').value,note:document.getElementById('in-note').value,date:todayStr()});
-  save('inputs');document.getElementById('in-source').value='';document.getElementById('in-note').value='';renderIO();
-}
-function saveOutput(){
-  if(!document.getElementById('out-desc').value.trim())return;
-  STATE.outputs.push({id:Date.now(),desc:document.getElementById('out-desc').value,date:todayStr()});
-  save('outputs');document.getElementById('out-desc').value='';renderIO();
-}
+/* ---------- 输出统计（只数读书笔记攒下来的输出） ---------- */
 function renderIO(){
-  const rate=STATE.inputs.length?Math.round(STATE.outputs.length/STATE.inputs.length*100):0;
-  document.getElementById('io-stats').innerHTML='<p>📥 输入 '+STATE.inputs.length+' 条 | 📤 输出 '+STATE.outputs.length+' 条 | 转化率 <b>'+rate+'%</b></p>';
+  var box=document.getElementById('io-stats'); if(!box)return;
+  var n=(STATE.outputs||[]).length;
+  box.textContent=n?('📤 已累计输出 '+n+' 条'):'📤 还没有输出，记一条读书笔记就有第一条了';
 }
-
-/* ---------- 工作分析 ---------- */
-function aiWork(){
-  const key=document.getElementById('ai-key').value;
-  if(!key){alert('请先在「🎯 长期目标」的 ⚙️ 设置里填写 DeepSeek Key');return;}
-  const client=document.getElementById('work-client').value,time=document.getElementById('work-time').value,action=document.getElementById('work-action').value,topic=document.getElementById('work-topic').value;
-  const proxy=document.getElementById('ai-proxy').value;
-  const prompt='分析主题「'+topic+'」。\n客户：'+client+'\n时间：'+time+'\n措施：'+action+'\n请严格返回JSON：{"root":"根因","factors":{"人":[],"流程":[],"资源":[],"外部":[]},"countermeasures":["对策"],"risks":["风险"],"metrics":["可衡量指标"]}。只返回JSON。';
-  const url='https://api.deepseek.com/chat/completions';
-  const headers={'Content-Type':'application/json','Authorization':'Bearer '+key};
-  const body={model:'deepseek-chat',messages:[{role:'system',content:'你是工作分析专家，只输出严格JSON。'},{role:'user',content:prompt}],response_format:{type:'json_object'}};
-  (async()=>{
-    try{
-      let res;
-      if(proxy){res=await fetch(proxy,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({url,headers,body})});res=await res.json();res={choices:[{message:{content:res.choices[0].message.content}}]};}
-      else{res=await fetch(url,{method:'POST',headers,body:JSON.stringify(body)});res=await res.json();}
-      const c=res.choices[0].message.content;
-      const r=JSON.parse(c.replace(/```json|```/g,'').trim());
-      document.getElementById('work-result').style.display='block';
-      const f = r.factors || {};
-      document.getElementById('work-result').innerHTML='<h3>🤖 AI 分析结果</h3>'+
-        '<p><b>根因：</b>'+esc(r.root||'—')+'</p>'+
-        '<div class="card"><b>👤 人</b><p>'+esc((f.人||[]).join('、'))+'</p></div>'+
-        '<div class="card"><b>🔄 流程</b><p>'+esc((f.流程||[]).join('、'))+'</p></div>'+
-        '<div class="card"><b>💰 资源</b><p>'+esc((f.资源||[]).join('、'))+'</p></div>'+
-        '<div class="card"><b>🌍 外部</b><p>'+esc((f.外部||[]).join('、'))+'</p></div>'+
-        '<p><b>对策：</b>'+esc((r.countermeasures||[]).join('、'))+'</p>'+
-        '<p><b>风险：</b>'+esc((r.risks||[]).join('、'))+'</p>'+
-        '<p><b>指标：</b>'+esc((r.metrics||[]).join('、'))+'</p>'+
-        '<button class="btn btn-success" onclick="saveWork()">💾 保存到记录</button>';
-    }catch(err){alert('AI 分析失败：'+err.message);}
-  })();
-}
-function saveWork(){
-  STATE.works.push({id:Date.now(),topic:document.getElementById('work-topic').value,client:document.getElementById('work-client').value,time:document.getElementById('work-time').value,action:document.getElementById('work-action').value,date:todayStr()});
-  save('works');renderWork();
-  document.getElementById('work-topic').value='';document.getElementById('work-client').value='';document.getElementById('work-time').value='';document.getElementById('work-action').value='';document.getElementById('work-result').style.display='none';
-}
-function renderWork(){
-  document.getElementById('work-list').innerHTML=STATE.works.slice(-12).reverse().map(w=>'<div class="card"><h4>'+esc(w.topic||'未命名')+'</h4><div class="meta">'+esc(w.date)+'</div><p><b>客户：</b>'+esc(w.client)+'</p><p><b>时间：</b>'+esc(w.time)+'</p><p><b>措施：</b>'+esc(w.action)+'</p><button class="btn btn-sm btn-danger" onclick="delWork('+w.id+')">删除</button></div>').join('')||'<div class="empty">暂无分析记录</div>';
-}
-function delWork(id){if(!confirm('删除这条分析记录？'))return;STATE.works=STATE.works.filter(x=>x.id!=id);save('works');renderWork();}
 
 /* ---------- 备份 ---------- */
 function exportData(){
@@ -1374,7 +1175,7 @@ function syncRestoreSnap(){
   }catch(e){alert('快照损坏：'+e.message);}
 }
 function renderAll(){
-  [renderDash,renderGoals,renderHabits,renderHeat,renderCalendar,renderReview,renderAnalysis,renderCritique,renderIO,renderWork,renderCases,renderDaily,renderBooks,refreshGoalSelectors,backfillGoalHabits,setGreeting]
+  [renderDash,renderGoals,renderHabits,renderHeat,renderCalendar,renderIO,renderCases,renderBooks,refreshGoalSelectors,backfillGoalHabits,setGreeting]
     .forEach(fn=>{try{if(typeof fn==='function')fn();}catch(e){}});
 }
 let syncLastPush=0;
@@ -1521,7 +1322,7 @@ window.addEventListener('pagehide',function(){if(SYNC.code&&SYNC.dirty)syncNow(f
 /* ---------- 手机版：底部 Tab 栏 + 「更多」面板 + 配色主题 ---------- */
 (function(){
   const TABS=[['dashboard','🏠','今日'],['goals','🎯','目标'],['habits','✅','习惯'],['calendar','📅','日历'],['review','🔍','复盘']];
-  const MORE=[['cases','🧭','客户分析'],['work','💼','工作分析'],['backup','💾','备份与同步']];
+  const MORE=[['cases','🧭','客户分析'],['backup','💾','备份与同步']];
   const THEMES=[['fresh','清爽'],['warm','暖阳'],['forest','墨绿']];
   const MORE_IDS=MORE.map(x=>x[0]);
 
@@ -2071,85 +1872,6 @@ caseInit();
 </script>
 <!-- ================= 每日复盘 + 客户分析联动（v12） ================= -->
 <script>
-/* ---------- 每日复盘 ---------- */
-function drDate(){var e=document.getElementById('dr-date');return (e&&e.value)?e.value:caseToday();}
-function drVal(id){var e=document.getElementById(id);return e?e.value.trim():'';}
-function drSet(id,v){var e=document.getElementById(id);if(e)e.value=v==null?'':v;}
-function drStatus(m){var e=document.getElementById('dr-status');if(e)e.textContent=m;}
-function drPersist(){if(typeof save==='function')save('dailyReviews');}
-
-function drMaterials(date){
-  var out=[];
-  (STATE.cases||[]).forEach(function(c){
-    var its=(typeof caseNextItems==='function')?caseNextItems(c):(c.items||[]);
-    (its||[]).forEach(function(i){
-      if(i.done&&(i.doneAt||i.date)===date)out.push('客户完成 · '+(c.name||'未命名客户')+' · '+(i.text||''));
-      else if(!i.done&&i.date===date)out.push('客户待办 · '+(c.name||'未命名客户')+' · '+(i.text||''));
-    });
-  });
-  (STATE.todos||[]).filter(function(t){return t.date===date&&t.done&&!t.auto;}).forEach(function(t){
-    out.push('完成待办 · '+t.text);
-  });
-  return out;
-}
-function renderDrMaterial(){
-  var box=document.getElementById('dr-material'); if(!box)return;
-  var list=drMaterials(drDate());
-  box.innerHTML='<b>当天素材（自动汇总）</b>'+
-    (list.length?('<br>'+list.map(function(x){return '· '+caseE(x);}).join('<br>')):'<br><span class="dr-gap">今天还没有案件事项或待办</span>')+
-    (list.length?'<div class="row-actions" style="margin-top:6px"><button class="btn btn-sm btn-ghost" onclick="drFillFact()">填入事实框</button></div>':'');
-}
-function drFillFact(){
-  var list=drMaterials(drDate()); if(!list.length)return;
-  var cur=drVal('dr-fact');
-  drSet('dr-fact',(cur?cur+'\n':'')+list.map(function(x){return '· '+x;}).join('\n'));
-}
-function saveDaily(){
-  var date=drDate();
-  var rec={date:date,fact:drVal('dr-fact'),conflict:drVal('dr-conflict'),info:drVal('dr-info'),next:drVal('dr-next'),polished:drVal('dr-polished')};
-  if(!rec.fact&&!rec.conflict&&!rec.info&&!rec.next&&!rec.polished){caseTip('至少写一条再保存');return;}
-  var exist=(STATE.dailyReviews||[]).filter(function(x){return x.date===date;})[0];
-  if(exist){
-    if(!confirm(date+' 已有一条，覆盖它？'))return;
-    Object.keys(rec).forEach(function(k){exist[k]=rec[k];});
-    exist.updatedAt=Date.now();
-  }else{
-    STATE.dailyReviews=STATE.dailyReviews||[];
-    rec.id=Date.now();rec.createdAt=Date.now();
-    STATE.dailyReviews.push(rec);
-  }
-  drPersist();renderDaily();drStatus('已保存 '+date);
-}
-function clearDaily(){
-  ['dr-fact','dr-conflict','dr-info','dr-next','dr-polished'].forEach(function(i){drSet(i,'');});
-  drStatus('');
-}
-function aiPolishDaily(){
-  var keyEl=document.getElementById('ai-key');
-  var key=keyEl?keyEl.value:'';
-  if(!key){alert('请先在「🎯 长期目标」的 ⚙️ 设置里填写 DeepSeek Key');return;}
-  var proxyEl=document.getElementById('ai-proxy');
-  var text='事实：'+drVal('dr-fact')+'\n主要矛盾：'+drVal('dr-conflict')+'\n信息缺口：'+drVal('dr-info')+'\n下一步：'+drVal('dr-next');
-  if(text.replace(/\s/g,'').length<10){caseTip('先写点内容再整理');return;}
-  drStatus('正在整理…');
-  var url='https://api.deepseek.com/chat/completions';
-  var headers={'Content-Type':'application/json','Authorization':'Bearer '+key};
-  var body={model:'deepseek-chat',temperature:0.4,messages:[
-    {role:'system',content:'你把零散笔记整理成客观冷静的第一人称复盘叙述。要求：先摆事实且不带情绪评价词，再点出主要矛盾，再说明还缺哪些信息，最后给出下一步集中力量的方向。用口语短句，不超过四百字，不要小标题，不要用破折号。'},
-    {role:'user',content:text}]};
-  fetch(url,{method:'POST',headers:headers,body:JSON.stringify(body)})
-    .then(function(r){return r.json();})
-    .then(function(res){
-      var c=res&&res.choices&&res.choices[0]&&res.choices[0].message?res.choices[0].message.content:'';
-      if(!c)throw new Error('返回为空');
-      drSet('dr-polished',c.trim());
-      drStatus('整理完成，确认后点保存');
-    })
-    .catch(function(e){
-      drStatus((proxyEl&&proxyEl.value)?('直连失败（'+e.message+'）'):('整理失败：'+e.message));
-    });
-}
-
 /* ---------- AI 自检：汇总工作台数据后交给 AI 分析 ---------- */
 function selfCheckDays(n){
   var out=[];
@@ -2203,16 +1925,15 @@ function selfCheckData(){
     }).join('\n'));
   }else{out.push('【客户分析】还没有录入客户');}
 
-  var drs=(STATE.dailyReviews||[]).filter(function(r){return r.date>=from&&r.date<=to;}).sort(function(a,b){return a.date<b.date?-1:1;});
-  if(drs.length){
-    out.push('【最近7天每日复盘】');
-    drs.forEach(function(r){
-      out.push('· '+r.date+'｜事实：'+(r.fact||'—')+'｜主要矛盾：'+(r.conflict||'—')+'｜信息缺口：'+(r.info||'—')+'｜下一步：'+(r.next||'—'));
-    });
-  }else{out.push('【每日复盘】最近7天没有记录');}
-
-  var ins=(STATE.inputs||[]).length, outs=(STATE.outputs||[]).length;
-  out.push('【输入输出闭环】累计输入 '+ins+' 条，输出 '+outs+' 条，转化率 '+(ins?Math.round(outs/ins*100)+'%':'—'));
+  var bs=STATE.books||[];
+  if(bs.length){
+    out.push('【读书笔记】共 '+bs.length+' 本，累计输出 '+((STATE.outputs||[]).length)+' 条');
+    out.push(bs.map(function(b){
+      var ns=(b.notes||[]).filter(function(n){return n.date>=from&&n.date<=to;});
+      return '· 《'+(b.title||'未命名')+'》'+(b.done?'（已读完）':'')+'｜本周记 '+ns.length+' 条'+
+        (ns.length?('：'+ns.slice(0,3).map(function(n){return (n.mine||n.idea||'').slice(0,40);}).join('；')):'');
+    }).join('\n'));
+  }else{out.push('【读书笔记】还没有加书');}
   return out.join('\n');
 }
 function aiSelfCheck(){
@@ -2247,39 +1968,7 @@ function aiSelfCheck(){
       if(st)st.textContent='自检失败：'+e.message+'（本地直连若被跨域拦截，请在 AI 设置里填代理地址）';
     });
 }
-function renderDaily(){
-  var box=document.getElementById('dr-list'); if(!box)return;
-  var s=document.getElementById('dr-search');
-  var kw=(s&&s.value?s.value:'').trim().toLowerCase();
-  var list=(STATE.dailyReviews||[]).slice().sort(function(a,b){return a.date<b.date?1:(a.date>b.date?-1:0);});
-  if(kw)list=list.filter(function(r){return [r.date,r.fact,r.conflict,r.info,r.next,r.polished].join(' ').toLowerCase().indexOf(kw)>=0;});
-  if(!list.length){box.innerHTML='<div class="empty">'+(kw?'没有匹配的记录':'还没有每日复盘，写下第一篇吧')+'</div>';return;}
-  box.innerHTML=list.map(function(r){
-    var p=[];
-    if(r.fact)p.push('<p><b>事实：</b>'+caseE(r.fact)+'</p>');
-    if(r.conflict)p.push('<p><b>主要矛盾：</b>'+caseE(r.conflict)+'</p>');
-    if(r.info)p.push('<p><b>信息：</b>'+caseE(r.info)+'</p>');
-    if(r.next)p.push('<p><b>下一步：</b>'+caseE(r.next)+'</p>');
-    if(r.polished)p.push('<p style="background:var(--bg);padding:8px;border-radius:8px;white-space:pre-wrap"><b>整理稿：</b>'+caseE(r.polished)+'</p>');
-    return '<div class="card"><div class="meta">'+caseE(r.date)+'</div>'+p.join('')+
-      '<div class="row-actions"><button class="btn btn-sm btn-ghost" onclick="loadDaily(\''+r.date+'\')">载入编辑</button>'+
-      '<button class="btn btn-sm btn-danger" onclick="delDaily('+r.id+')">删除</button></div></div>';
-  }).join('');
-}
-function loadDaily(date){
-  var r=(STATE.dailyReviews||[]).filter(function(x){return x.date===date;})[0]; if(!r)return;
-  drSet('dr-date',r.date);drSet('dr-fact',r.fact);drSet('dr-conflict',r.conflict);
-  drSet('dr-info',r.info);drSet('dr-next',r.next);drSet('dr-polished',r.polished);
-  renderDrMaterial();drStatus('已载入 '+date+'，改完点保存覆盖');
-  var f=document.getElementById('dr-fact'); if(f&&f.scrollIntoView)f.scrollIntoView({behavior:'smooth',block:'center'});
-}
-function delDaily(id){
-  if(!confirm('删除这条每日复盘？'))return;
-  STATE.dailyReviews=(STATE.dailyReviews||[]).filter(function(x){return x.id!==id;});
-  drPersist();renderDaily();
-}
-
-/* 案件清单 → 日历待办的同步统一走 caseSyncTodoAuto()（见上方台账模块） */
+/* 案件清单 → 日历待办的同步统一走 caseSyncTodoAuto()（见上方客户分析模块） */
 
 /* ---------- 读书笔记（书卡） ---------- */
 let bookAddIn={}, bookNotesOpen={};
@@ -2459,18 +2148,13 @@ function seedReadingHabit(){
 }
 
 (function(){
-  var d=document.getElementById('dr-date');
-  if(d){
-    if(!d.value)d.value=caseToday();
-    d.addEventListener('change',renderDrMaterial);
-  }
   if(typeof renderMap==='object'){
     var rr=renderMap.review;
-    renderMap.review=function(){if(typeof rr==='function')rr();renderDrMaterial();renderDaily();renderBooks();};
+    renderMap.review=function(){if(typeof rr==='function')rr();renderBooks();renderIO();};
   }
   caseMigrate();
   caseSyncTodoAuto();
-  renderDrMaterial();renderDaily();renderBooks();
+  renderBooks();renderIO();
   seedReadingHabit();
   renderHabits();renderDash();
 })();
@@ -2486,7 +2170,7 @@ const APP_ICON='data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAQAAAAEACAYAAABccq
 
 /* ---------- 轻提示 / 震动 ---------- */
 /* 版本标识：每次改动本文件时改这里——在线版会自动提示手机更新 */
-const BUILD_ID='v13-2026-09-28';
+const BUILD_ID='v14-2026-09-28';
 let toastEl=null,toastTimer=null;
 function toast(msg,ms){
   if(!toastEl){toastEl=document.createElement('div');toastEl.className='m-toast';document.body.appendChild(toastEl);}
@@ -2853,73 +2537,6 @@ function mPickDate(k){
   if(det)setTimeout(()=>{try{det.scrollIntoView({behavior:'smooth',block:'center'});}catch(e){}},80);
 }
 
-/* ---------- 复盘页：跳转条 + 折叠分组 ---------- */
-function unwrapAcc(container){
-  container.querySelectorAll(':scope > .m-acc').forEach(n=>n.remove());
-  container.querySelectorAll(':scope > .m-acc-body').forEach(function(b){
-    while(b.firstChild)container.insertBefore(b.firstChild,b);
-    b.remove();
-  });
-  container.querySelectorAll(':scope > .section-title').forEach(t=>{t.style.display='';});
-}
-const accState={};
-function accGroup(container,titleEl,label,openDefault){
-  const nodes=[];let n=titleEl.nextElementSibling;
-  while(n&&!n.classList.contains('section-title')){nodes.push(n);n=n.nextElementSibling;}
-  const btn=document.createElement('button');
-  btn.type='button';btn.className='m-acc';
-  btn.innerHTML='<span>'+esc(label)+'</span><span class="c"></span>';
-  const body=document.createElement('div');body.className='m-acc-body';
-  nodes.forEach(x=>body.appendChild(x));
-  titleEl.style.display='none';
-  container.insertBefore(btn,titleEl.nextSibling);
-  container.insertBefore(body,btn.nextSibling);
-  let open=accState[label]===undefined?!!openDefault:!!accState[label];
-  const set=function(v){
-    open=v;accState[label]=v;
-    body.style.display=v?'':'none';
-    btn.querySelector('.c').textContent=v?'收起 ▴':'展开 ▾';
-  };
-  btn._setOpen=set;
-  btn.addEventListener('click',()=>set(!open));
-  set(open);
-  return btn;
-}
-function mReview(){
-  _renderReview();
-  if(!isM())return;
-  const view=el('review');if(!view)return;
-  unwrapAcc(view);
-  view.querySelectorAll(':scope > .section-title').forEach(function(s){
-    accGroup(view,s,s.textContent.trim(),false);
-  });
-}
-function jumpTo(key){
-  const view=el('review');if(!view)return;
-  if(!key){
-    const first=view.querySelector(':scope > .card');
-    if(first)first.scrollIntoView({behavior:'smooth',block:'start'});
-    return;
-  }
-  const btns=[...view.querySelectorAll('.m-acc')];
-  const b=btns.find(x=>x.textContent.indexOf(key)>=0);
-  if(!b)return;
-  if(b._setOpen)b._setOpen(true);
-  const body=b.nextElementSibling;
-  setTimeout(()=>{(body||b).scrollIntoView({behavior:'smooth',block:'start'});},60);
-}
-function insertJumpBar(){
-  const view=el('review');if(!view||el('m-jump'))return;
-  const bar=document.createElement('div');bar.className='m-jump';bar.id='m-jump';
-  [['📝 写复盘',null],['🧠 剖析','输出型剖析'],['⚖️ 自省','批评'],['🔄 闭环','输入'],['📚 记录','已保存复盘']]
-    .forEach(function(it){
-      const b=document.createElement('button');b.type='button';b.textContent=it[0];
-      b.addEventListener('click',()=>jumpTo(it[1]));
-      bar.appendChild(b);
-    });
-  view.insertBefore(bar,view.firstChild);
-}
-
 /* ---------- 折叠表单 ---------- */
 function collapseForm(viewId,label,mode){
   const view=el(viewId);if(!view)return null;
@@ -3047,7 +2664,7 @@ document.addEventListener('click',function(e){
     if(k==='menu')qaMenu();
     else if(k==='todo')qaTodoForm();
     else if(k==='habit')qaHabitForm();
-    else if(k==='review')gotoInput('review','rev-body',null);
+    else if(k==='review')gotoInput('review','book-title',null);
     else if(k==='goal')gotoInput('goals','goal-title',goalsForm);
     else if(k==='add-habit'){
       const n=el('q-habit-name'),name=n?n.value.trim():'';
@@ -3134,7 +2751,6 @@ const _renderDash=window.renderDash;
 const _renderHabits=window.renderHabits;
 const _renderCalendar=window.renderCalendar;
 const _renderHeat=window.renderHeat;
-const _renderReview=window.renderReview;
 const _showDay=window.showDay;
 const _pickDate=window.pickDate;
 const _show=window.show;
@@ -3145,11 +2761,6 @@ window.renderCalendar=function(){
   if(isM()){mCalendar();return;}
   _renderCalendar();
   if(el('cal-detail'))_showDay(currentDay||todayStr()); // 从手机切回桌面时刷新右下角当天详情
-};
-window.renderReview=function(){
-  if(isM()){mReview();return;}
-  const v=el('review');if(v)unwrapAcc(v); // 从手机切回桌面时还原分区
-  _renderReview();
 };
 window.showDay=function(k){if(isM())mShowDay(k);else _showDay(k);};
 window.pickDate=function(k){if(isM())mPickDate(k);else _pickDate(k);};
@@ -3163,7 +2774,6 @@ try{
   if(typeof renderMap==='object'&&renderMap){
     renderMap.dashboard=window.renderDash;
     renderMap.calendar=window.renderCalendar;
-    renderMap.review=window.renderReview;
     renderMap.habits=function(){backfillGoalHabits();window.renderHabits();};
   }
 }catch(e){}
@@ -3188,7 +2798,6 @@ function initMobileUI(){
   // 卡片顺序交给 setDashOrder()（每次渲染按当前端设置，手机/电脑不同）
   goalsForm=collapseForm('goals','＋ 新建目标 / AI 拆解',false);
   collapseForm('calendar','＋ 添加待办',true);
-  insertJumpBar();
   const fab=document.createElement('button');
   fab.type='button';fab.className='m-fab';fab.id='m-fab';fab.setAttribute('aria-label','快速添加');
   fab.textContent='＋';
