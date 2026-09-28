@@ -407,6 +407,16 @@ select.case-stage{width:auto;font:inherit;font-size:.76em;padding:2px 4px;margin
 .goal-grid{display:flex;flex-wrap:wrap;gap:3px;margin-top:6px}
 .goal-cell{width:12px;height:12px;border-radius:3px;background:var(--border)}
 .goal-cell.on{background:var(--success)}
+.identity-bar{display:flex;align-items:center;gap:10px;margin:0 0 14px;padding:9px 13px;border-radius:12px;
+  background:var(--accent-soft);color:var(--primary);font-size:.9em;cursor:pointer}
+.identity-bar .id-txt{flex:1;min-width:0;font-weight:600;word-break:break-word}
+.identity-bar .id-edit{flex-shrink:0;font-size:.85em;color:var(--accent);font-weight:600}
+.identity-bar.empty{background:transparent;border:1px dashed var(--border);color:var(--muted)}
+.identity-bar.empty .id-txt{font-weight:400}
+.dash-banner{margin-bottom:14px;border-left:3px solid var(--primary)}
+.dash-banner .db-txt{font-size:1.02em;font-weight:600;color:var(--primary);word-break:break-word}
+.goal-ev{margin-top:8px;display:inline-block;padding:6px 10px;border-radius:8px;background:var(--bg);
+  font-size:.86em;color:var(--primary)}
 .book-head{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
 .book-title{flex:1;min-width:0;font-size:1.04em;font-weight:700;color:var(--primary);word-break:break-word;cursor:text}
 .book-title:hover{color:var(--accent)}
@@ -454,8 +464,10 @@ select.case-stage{width:auto;font:inherit;font-size:.76em;padding:2px 4px;margin
     <header class="topbar" data-page-node-id="URnTkb9JIz8aR26rrntdSA">
       <div data-page-node-id="6Bfvdb2tqYRRyJBcKA7Byj"><h1 id="greeting" data-page-node-id="PfDQ3P6NWwaigXBEV8PM32">你好</h1><span class="date" id="today-label" data-page-node-id="ROWYDqNPbc1ODDMeXkBmEQ"></span></div>
     </header>
+    <div id="identity-bar" class="identity-bar" role="button" tabindex="0" onclick="identityEdit()"></div>
 
     <div id="dashboard" class="view active" data-page-node-id="6FEHq3BDSwocTcIRi0MUEn">
+      <div id="dash-identity"></div>
       <div class="grid-3" id="dash-stats" data-page-node-id="yXfIEicurr9eacVIdY38Uy"></div>
       <div class="grid-3" id="dash-cards" data-page-node-id="RnlYSmZaVatNMA6VzLRjDQ">
         <div class="card" data-page-node-id="qbUiLyICsrfDeVoBek19dE"><h3 data-page-node-id="PcnrlRoLyCTy3cCaOEUJlD">📋 今日待办</h3><div id="dash-todos" data-page-node-id="Oz8CtBNAluPpYgYnMwdzC6"></div></div>
@@ -465,6 +477,16 @@ select.case-stage{width:auto;font:inherit;font-size:.76em;padding:2px 4px;margin
     </div>
 
     <div id="goals" class="view" data-page-node-id="BUWD6jyEHiFHD1z3vtDCWW">
+      <div class="card" style="border-left:3px solid var(--primary)">
+        <h3>🧭 我要成为的人</h3>
+        <p class="meta" style="margin-bottom:8px">一行一句，写你想成为的样子（如：我是用镜头记录生活的人）。每天在每一页顶部自动轮换显示一句。</p>
+        <textarea id="identity-text" placeholder="我是……的人&#10;我想成为……"></textarea>
+        <div class="row-actions">
+          <button class="btn" onclick="saveIdentity()">保存宣言</button>
+          <span class="meta" id="identity-status" style="align-self:center"></span>
+        </div>
+      </div>
+
       <div class="card" data-page-node-id="IyylDdgZY90dANmLuRZGuZ">
         <details data-page-node-id="A6mHQKZHMfkwRGwtBId14f"><summary style="cursor:pointer;color:var(--accent);font-size:.9em" data-page-node-id="57aLLva8ruE1e5YpNMSYlJ">⚙️ AI 拆解设置（可选，自动保存）</summary>
           <input id="ai-key" name="wb-ai-key" autocomplete="off" spellcheck="false" placeholder="DeepSeek API Key（留空则不拆解）" onchange="saveAiCfg()" data-page-node-id="RDEiqIKGPPXW0KUUpBy7vA">
@@ -611,7 +633,8 @@ const STATE = {
   todos: JSON.parse(localStorage.getItem('wb_todos')||'[]'),
   outputs: JSON.parse(localStorage.getItem('wb_outputs')||'[]'),
   cases: JSON.parse(localStorage.getItem('wb_cases')||'[]'),
-  books: JSON.parse(localStorage.getItem('wb_books')||'[]')
+  books: JSON.parse(localStorage.getItem('wb_books')||'[]'),
+  identity: JSON.parse(localStorage.getItem('wb_identity')||'[]')
 };
 function save(k){localStorage.setItem('wb_'+k, JSON.stringify(STATE[k]));syncTouch();}
 
@@ -674,8 +697,13 @@ function renderDash(){
     const subs=STATE.todos.filter(t=>t.goalId==g.id);
     const done=subs.filter(t=>t.done).length;
     const pct=subs.length?Math.round(done/subs.length*100):0;
-    return '<div style="margin-bottom:8px"><div style="display:flex;justify-content:space-between"><b>'+esc(g.title)+'</b><span class="meta">'+pct+'%</span></div><div class="pbar"><div class="pfill" style="width:'+pct+'%"></div></div><span class="meta">'+done+'/'+subs.length+' 步</span></div>';
+    const ev=goalEvidence(g);
+    return '<div style="margin-bottom:8px"><div style="display:flex;justify-content:space-between"><b>'+esc(g.title)+'</b>'+
+      '<span class="meta">'+(subs.length?(pct+'%'):('本周 '+ev.ck+' 天'))+'</span></div>'+
+      (subs.length?'<div class="pbar"><div class="pfill" style="width:'+pct+'%"></div></div><span class="meta">'+done+'/'+subs.length+' 步</span>'
+        :'<span class="meta">本周打卡 '+ev.ck+' 天 · 完成 '+ev.td+' 项</span>')+'</div>';
   }).join('')||'<div class="empty">暂无目标，去「长期目标」创建吧</div>';
+  renderDashBanner();
 }
 
 /* ---------- 目标 ---------- */
@@ -696,6 +724,66 @@ function createGoal(title,why,constraint,extra){
   save('goals');save('habits');
   return gid;
 }
+/* ---------- 身份宣言：每一页顶部轮换显示 ---------- */
+function identityLines(){
+  return (STATE.identity||[]).map(function(s){return String(s==null?'':s).trim();}).filter(Boolean);
+}
+function identityDayIndex(n){
+  if(!n)return 0;
+  var d=new Date();
+  var days=Math.floor(Date.UTC(d.getFullYear(),d.getMonth(),d.getDate())/86400000);
+  return ((days%n)+n)%n;
+}
+function identityTodayPick(){
+  var pool=identityLines().map(function(t){return {t:t,sub:''};});
+  (STATE.goals||[]).forEach(function(g){
+    if(g.why)pool.push({t:'目标 · '+g.title,sub:g.why});
+  });
+  if(!pool.length)return null;
+  return pool[identityDayIndex(pool.length)];
+}
+function renderIdentityBar(){
+  var bar=document.getElementById('identity-bar'); if(!bar)return;
+  var lines=identityLines();
+  if(!lines.length){
+    bar.className='identity-bar empty';
+    bar.innerHTML='<span class="id-txt">写一句你想成为的样子</span><span class="id-edit">去写 →</span>';
+    return;
+  }
+  bar.className='identity-bar';
+  bar.innerHTML='<span class="id-txt">🧭 '+esc(lines[identityDayIndex(lines.length)])+'</span><span class="id-edit">改</span>';
+}
+function renderDashBanner(){
+  var box=document.getElementById('dash-identity'); if(!box)return;
+  var pick=identityTodayPick();
+  if(!pick){box.innerHTML='';box.style.display='none';return;}
+  box.style.display='';
+  box.innerHTML='<div class="card dash-banner"><div class="db-txt">🧭 '+esc(pick.t)+'</div>'+
+    (pick.sub?'<div class="meta" style="margin-top:4px">'+esc(pick.sub)+'</div>':'')+'</div>';
+}
+function renderIdentityForm(){
+  var t=document.getElementById('identity-text'); if(!t)return;
+  t.value=identityLines().join('\n');
+}
+function identityEdit(){
+  var nav=document.querySelector('.nav-item[onclick*="goals"]');
+  if(typeof show==='function')show('goals',nav||null);
+  renderIdentityForm();
+  var t=document.getElementById('identity-text');
+  if(t)setTimeout(function(){try{t.focus();}catch(e){}
+    try{t.scrollIntoView({behavior:'smooth',block:'center'});}catch(e){}},80);
+}
+function saveIdentity(){
+  var t=document.getElementById('identity-text');
+  var lines=(t?t.value:'').split('\n').map(function(s){return s.trim();}).filter(Boolean);
+  STATE.identity=lines;
+  save('identity');
+  var s=document.getElementById('identity-status');
+  if(s)s.textContent=lines.length?('已保存 '+lines.length+' 句'):'已清空';
+  renderIdentityBar();renderDashBanner();
+  if(typeof toast==='function')toast(lines.length?('已保存 '+lines.length+' 句宣言'):'宣言已清空');
+}
+
 /* ---------- 目标卡：每天点一下打卡（背后就是该目标的同名习惯） ---------- */
 let goalGridOpen={};
 function goalHabit(g){return STATE.habits.filter(function(h){return h.goalId==g.id;})[0]||null;}
@@ -707,6 +795,19 @@ function goalStreakN(h){
 }
 function goalTotal(h){return (h&&h.logs)?Object.keys(h.logs).filter(function(k){return h.logs[k];}).length:0;}
 function goalDoneToday(g){var h=goalHabit(g);return !!(h&&h.logs&&h.logs[todayStr()]);}
+function weekFrom(){
+  var d=new Date(), wd=(d.getDay()+6)%7;      // 周一算一周的开始
+  var mon=new Date(d); mon.setDate(d.getDate()-wd);
+  return todayStr(mon);
+}
+function goalEvidence(g){
+  var from=weekFrom(), to=todayStr(), ck=0;
+  STATE.habits.filter(function(h){return h.goalId==g.id;}).forEach(function(h){
+    Object.keys(h.logs||{}).forEach(function(k){if(k>=from&&k<=to&&h.logs[k])ck++;});
+  });
+  var td=(STATE.todos||[]).filter(function(t){return t.goalId==g.id&&t.done&&t.date>=from&&t.date<=to;}).length;
+  return {ck:ck,td:td};
+}
 function goalCellGrid(h){
   var cells='';
   for(var i=29;i>=0;i--){
@@ -734,12 +835,15 @@ function renderGoals(){
     const done=subs.filter(t=>t.done).length;
     const pct=subs.length?Math.round(done/subs.length*100):0;
     const h=goalHabit(g),on=goalDoneToday(g),st=goalStreakN(h),tot=goalTotal(h),open=!!goalGridOpen[g.id];
+    const ev=goalEvidence(g);
     return '<div class="card goal-card'+(on?' checked':'')+'">'+
       '<div style="display:flex;justify-content:space-between;align-items:flex-start;gap:8px">'+
       '<h3 style="margin:0">'+esc(g.title)+'</h3>'+
-      '<span class="tag'+(pct===100?' done':'')+'" style="flex-shrink:0">'+(pct===100?'已完成':pct+'%')+'</span></div>'+
+      (subs.length?'<span class="tag'+(pct===100?' done':'')+'" style="flex-shrink:0">'+(pct===100?'已完成':pct+'%')+'</span>':'')+
+      '</div>'+
       (g.why?'<p class="meta" style="margin-top:6px">💡 '+esc(g.why)+'</p>':'')+
       (g.constraint?'<p class="meta">📏 '+esc(g.constraint)+'</p>':'')+
+      '<div class="goal-ev">📌 本周：打卡 '+ev.ck+' 天 · 完成 '+ev.td+' 项</div>'+
       '<div class="goal-check">'+
       '<button class="btn btn-sm '+(on?'btn-success':'btn-ghost')+'" onclick="goalCheckIn('+g.id+')">'+
         (on?'✓ 今天已打卡':'打卡：今天推进了')+'</button>'+
@@ -748,9 +852,8 @@ function renderGoals(){
       '<button class="goal-toggle" onclick="goalGridToggle('+g.id+')">'+(open?'▾':'▸')+' 近 30 天</button>'+
       (open?goalCellGrid(h):'')+
       (subs.length
-        ? '<div class="pbar" style="margin-top:8px"><div class="pfill" style="width:'+pct+'%"></div></div>'+
-          '<span class="meta">'+done+'/'+subs.length+' 步已完成 · 创建于 '+esc(g.created)+'</span>'
-        : '<span class="meta" style="display:inline-block;margin-top:8px">还没有拆解步骤 · 创建于 '+esc(g.created)+'</span>')+
+        ? '<span class="meta" style="display:inline-block;margin-top:8px">拆解步骤 '+done+'/'+subs.length+' 步已完成 · 创建于 '+esc(g.created)+'</span>'
+        : '<span class="meta" style="display:inline-block;margin-top:8px">创建于 '+esc(g.created)+'</span>')+
       '<div class="row-actions"><button class="btn btn-sm btn-danger" onclick="delGoal('+g.id+')">删除</button></div></div>';
   }).join('')||'<div class="empty">还没有目标，创建一个吧</div>';
 }
@@ -1175,7 +1278,7 @@ function syncRestoreSnap(){
   }catch(e){alert('快照损坏：'+e.message);}
 }
 function renderAll(){
-  [renderDash,renderGoals,renderHabits,renderHeat,renderCalendar,renderIO,renderCases,renderBooks,refreshGoalSelectors,backfillGoalHabits,setGreeting]
+  [renderDash,renderGoals,renderHabits,renderHeat,renderCalendar,renderIO,renderCases,renderBooks,renderIdentityBar,renderDashBanner,refreshGoalSelectors,backfillGoalHabits,setGreeting]
     .forEach(fn=>{try{if(typeof fn==='function')fn();}catch(e){}});
 }
 let syncLastPush=0;
@@ -1310,6 +1413,8 @@ onDateChange();
 setGreeting();
 refreshGoalSelectors();
 backfillGoalHabits();
+renderIdentityBar();
+renderIdentityForm();
 renderDash();
 showDay(todayStr());
 syncLoadCfg();
@@ -2170,7 +2275,7 @@ const APP_ICON='data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAQAAAAEACAYAAABccq
 
 /* ---------- 轻提示 / 震动 ---------- */
 /* 版本标识：每次改动本文件时改这里——在线版会自动提示手机更新 */
-const BUILD_ID='v14-2026-09-28';
+const BUILD_ID='v15-2026-09-28';
 let toastEl=null,toastTimer=null;
 function toast(msg,ms){
   if(!toastEl){toastEl=document.createElement('div');toastEl.className='m-toast';document.body.appendChild(toastEl);}
