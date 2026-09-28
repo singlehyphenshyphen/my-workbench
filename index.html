@@ -416,6 +416,27 @@ select.case-stage{width:auto;font:inherit;font-size:.76em;padding:2px 4px;margin
 .case-del{color:var(--danger);margin-left:auto}
 .frm-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(168px,1fr));gap:8px}
 
+/* ===== 目标卡 + 读书笔记（v13） ===== */
+.goal-card.checked{border-left:3px solid var(--success)}
+.goal-check{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-top:9px}
+.goal-toggle{display:block;margin-top:8px;padding:2px 0;border:none;background:transparent;font-family:inherit;font-size:.84em;
+  font-weight:600;color:var(--muted);cursor:pointer}
+.goal-toggle:hover{color:var(--accent)}
+.goal-grid{display:flex;flex-wrap:wrap;gap:3px;margin-top:6px}
+.goal-cell{width:12px;height:12px;border-radius:3px;background:var(--border)}
+.goal-cell.on{background:var(--success)}
+.book-head{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.book-title{flex:1;min-width:0;font-size:1.04em;font-weight:700;color:var(--primary);word-break:break-word;cursor:text}
+.book-title:hover{color:var(--accent)}
+.book-meta{font-size:.78em;color:var(--muted)}
+.book-note{border-bottom:1px dashed var(--border);padding:6px 0}
+.book-note:last-child{border-bottom:none}
+.book-note-date{font-size:.74em;color:var(--muted);margin-bottom:1px}
+.book-note-txt{font-size:.94em;word-break:break-word;cursor:text}
+.book-note-txt.mine{color:#3d4b63}
+.book-note-txt:hover{color:var(--accent)}
+.book-actions{display:flex;gap:6px;flex-wrap:wrap;align-items:center;margin-top:8px}
+
 /* ===== 每日复盘 + 案件待办联动（v6 新增） ===== */
 .dr-mat{background:var(--bg);border:1px dashed var(--border);border-radius:10px;padding:9px 11px;margin-bottom:9px;font-size:.83em;color:#3d4b63;line-height:1.7}
 .dr-mat b{color:var(--primary)}
@@ -522,6 +543,20 @@ select.case-stage{width:auto;font:inherit;font-size:.76em;padding:2px 4px;margin
     </div>
 
     <div id="review" class="view" data-page-node-id="dpe4Q68TTPGif8e0p7Bwad">
+      <div class="card" style="border-left:3px solid var(--success)">
+        <h3>📚 读书笔记</h3>
+        <p class="meta" style="margin-bottom:8px">一本书一张卡：记下读到的观点，再写一句你自己的思考 / 新角度。记一条就算一次输出，自动进下面的「输入 → 输出」统计。</p>
+        <div class="frm-grid">
+          <input id="book-title" placeholder="书名"
+            onkeydown="if(event.key==='Enter'){event.preventDefault();addBook();}">
+          <input id="book-author" placeholder="作者（选填）">
+        </div>
+        <div class="row-actions">
+          <button class="btn" onclick="addBook()">＋ 添加这本书</button>
+        </div>
+      </div>
+      <div id="book-list"></div>
+
       <div class="card" style="border-left:3px solid var(--accent)">
         <h3>🧠 AI 自检</h3>
         <p class="meta" style="margin-bottom:8px">把最近 7 天的习惯打卡、逾期待办、客户分析、每日复盘和输入输出统计一起交给 AI，让它指出问题、找出主要矛盾、定下周只打的那一个点。客户数据按客户名字和「下一步」原样发送。</p>
@@ -532,6 +567,8 @@ select.case-stage{width:auto;font:inherit;font-size:.76em;padding:2px 4px;margin
         <div id="selfcheck-out" style="display:none;white-space:pre-wrap;background:var(--bg);padding:10px;border-radius:8px;margin-top:8px;line-height:1.8;font-size:.9em"></div>
       </div>
 
+      <details class="more-tools">
+        <summary>📖 每日深挖（五问，选填）</summary>
       <div class="card">
         <h3 style="display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap">
           <span>📝 每日复盘</span>
@@ -551,6 +588,7 @@ select.case-stage{width:auto;font:inherit;font-size:.76em;padding:2px 4px;margin
         </div>
         <p class="meta" id="dr-status" style="margin-top:6px"></p>
       </div>
+      </details>
 
       <div class="section-title">📚 每日复盘记录</div>
       <div class="card" style="padding:10px">
@@ -680,7 +718,8 @@ const STATE = {
   outputs: JSON.parse(localStorage.getItem('wb_outputs')||'[]'),
   works: JSON.parse(localStorage.getItem('wb_works')||'[]'),
   cases: JSON.parse(localStorage.getItem('wb_cases')||'[]'),
-  dailyReviews: JSON.parse(localStorage.getItem('wb_dailyReviews')||'[]')
+  dailyReviews: JSON.parse(localStorage.getItem('wb_dailyReviews')||'[]'),
+  books: JSON.parse(localStorage.getItem('wb_books')||'[]')
 };
 function save(k){localStorage.setItem('wb_'+k, JSON.stringify(STATE[k]));syncTouch();}
 
@@ -765,19 +804,61 @@ function createGoal(title,why,constraint,extra){
   save('goals');save('habits');
   return gid;
 }
+/* ---------- 目标卡：每天点一下打卡（背后就是该目标的同名习惯） ---------- */
+let goalGridOpen={};
+function goalHabit(g){return STATE.habits.filter(function(h){return h.goalId==g.id;})[0]||null;}
+function goalStreakN(h){
+  var n=0,d=new Date();
+  if(!h||!h.logs)return 0;
+  while(h.logs[todayStr(d)]){n++;d.setDate(d.getDate()-1);}
+  return n;
+}
+function goalTotal(h){return (h&&h.logs)?Object.keys(h.logs).filter(function(k){return h.logs[k];}).length:0;}
+function goalDoneToday(g){var h=goalHabit(g);return !!(h&&h.logs&&h.logs[todayStr()]);}
+function goalCellGrid(h){
+  var cells='';
+  for(var i=29;i>=0;i--){
+    var d=new Date();d.setDate(d.getDate()-i);var k=todayStr(d);
+    var on=!!(h&&h.logs&&h.logs[k]);
+    cells+='<div class="goal-cell'+(on?' on':'')+'" title="'+k+(on?' 已打卡':'')+'"></div>';
+  }
+  return '<div class="goal-grid">'+cells+'</div>';
+}
+function goalCheckIn(id){
+  var g=STATE.goals.filter(function(x){return x.id==id;})[0]; if(!g)return;
+  var h=goalHabit(g);
+  if(!h){h={id:Date.now()+Math.random(),name:g.title,logs:{},goalId:g.id};STATE.habits.push(h);}
+  h.logs=h.logs||{};
+  var t=todayStr();
+  h.logs[t]=!h.logs[t];
+  save('habits');
+  renderGoals();renderHabits();renderDash();
+  if(typeof toast==='function')toast(h.logs[t]?'已打卡：'+g.title:'已取消今天的打卡');
+}
+function goalGridToggle(id){goalGridOpen[id]=!goalGridOpen[id];renderGoals();}
 function renderGoals(){
   document.getElementById('goals-list').innerHTML=STATE.goals.map(g=>{
     const subs=STATE.todos.filter(t=>t.goalId==g.id);
     const done=subs.filter(t=>t.done).length;
     const pct=subs.length?Math.round(done/subs.length*100):0;
-    return '<div class="card">'+
+    const h=goalHabit(g),on=goalDoneToday(g),st=goalStreakN(h),tot=goalTotal(h),open=!!goalGridOpen[g.id];
+    return '<div class="card goal-card'+(on?' checked':'')+'">'+
       '<div style="display:flex;justify-content:space-between;align-items:flex-start;gap:8px">'+
       '<h3 style="margin:0">'+esc(g.title)+'</h3>'+
       '<span class="tag'+(pct===100?' done':'')+'" style="flex-shrink:0">'+(pct===100?'已完成':pct+'%')+'</span></div>'+
       (g.why?'<p class="meta" style="margin-top:6px">💡 '+esc(g.why)+'</p>':'')+
       (g.constraint?'<p class="meta">📏 '+esc(g.constraint)+'</p>':'')+
-      '<div class="pbar"><div class="pfill" style="width:'+pct+'%"></div></div>'+
-      '<span class="meta">'+done+'/'+subs.length+' 步已完成 · 创建于 '+esc(g.created)+'</span>'+
+      '<div class="goal-check">'+
+      '<button class="btn btn-sm '+(on?'btn-success':'btn-ghost')+'" onclick="goalCheckIn('+g.id+')">'+
+        (on?'✓ 今天已打卡':'打卡：今天推进了')+'</button>'+
+      '<span class="meta">'+(st?('🔥 连击 '+st+' 天'):'今天还没打卡')+(tot?(' · 累计 '+tot+' 天'):'')+'</span>'+
+      '</div>'+
+      '<button class="goal-toggle" onclick="goalGridToggle('+g.id+')">'+(open?'▾':'▸')+' 近 30 天</button>'+
+      (open?goalCellGrid(h):'')+
+      (subs.length
+        ? '<div class="pbar" style="margin-top:8px"><div class="pfill" style="width:'+pct+'%"></div></div>'+
+          '<span class="meta">'+done+'/'+subs.length+' 步已完成 · 创建于 '+esc(g.created)+'</span>'
+        : '<span class="meta" style="display:inline-block;margin-top:8px">还没有拆解步骤 · 创建于 '+esc(g.created)+'</span>')+
       '<div class="row-actions"><button class="btn btn-sm btn-danger" onclick="delGoal('+g.id+')">删除</button></div></div>';
   }).join('')||'<div class="empty">还没有目标，创建一个吧</div>';
 }
@@ -1293,7 +1374,7 @@ function syncRestoreSnap(){
   }catch(e){alert('快照损坏：'+e.message);}
 }
 function renderAll(){
-  [renderDash,renderGoals,renderHabits,renderHeat,renderCalendar,renderReview,renderAnalysis,renderCritique,renderIO,renderWork,renderCases,renderDaily,refreshGoalSelectors,backfillGoalHabits,setGreeting]
+  [renderDash,renderGoals,renderHabits,renderHeat,renderCalendar,renderReview,renderAnalysis,renderCritique,renderIO,renderWork,renderCases,renderDaily,renderBooks,refreshGoalSelectors,backfillGoalHabits,setGreeting]
     .forEach(fn=>{try{if(typeof fn==='function')fn();}catch(e){}});
 }
 let syncLastPush=0;
@@ -2200,6 +2281,183 @@ function delDaily(id){
 
 /* 案件清单 → 日历待办的同步统一走 caseSyncTodoAuto()（见上方台账模块） */
 
+/* ---------- 读书笔记（书卡） ---------- */
+let bookAddIn={}, bookNotesOpen={};
+function bookUid(){return Date.now().toString(36)+Math.random().toString(36).slice(2,6);}
+function bookList(){return STATE.books||[];}
+function bookFind(id){return bookList().filter(function(b){return b.id===id;})[0]||null;}
+function bookNoteOf(b,nid){return ((b&&b.notes)||[]).filter(function(n){return n.id===nid;})[0]||null;}
+function bookPersist(){if(typeof save==='function')save('books');}
+function bookTip(m){if(typeof toast==='function')toast(m);}
+
+function addBook(){
+  var t=document.getElementById('book-title'), a=document.getElementById('book-author');
+  var title=t?t.value.trim():'';
+  if(!title){bookTip('先写书名');if(t)t.focus();return;}
+  STATE.books=STATE.books||[];
+  STATE.books.push({id:bookUid(),title:title,author:a?a.value.trim():'',done:false,createdAt:Date.now(),notes:[]});
+  if(t)t.value='';
+  if(a)a.value='';
+  bookPersist();renderBooks();
+  bookTip('已加：'+title);
+}
+function bookToggleDone(id){var b=bookFind(id);if(!b)return;b.done=!b.done;bookPersist();renderBooks();}
+function bookDel(id){
+  var b=bookFind(id); if(!b)return;
+  var n=(b.notes||[]).length;
+  if(!confirm('删除《'+b.title+'》'+(n?('及其 '+n+' 条笔记'):'')+'？'))return;
+  STATE.books=bookList().filter(function(x){return x.id!==id;});
+  var before=(STATE.outputs||[]).length;
+  STATE.outputs=(STATE.outputs||[]).filter(function(o){return !(o.src==='booknote'&&o.bookId===id);});
+  if(STATE.outputs.length!==before&&typeof save==='function')save('outputs');
+  bookPersist();renderBooks();renderIO();
+  bookTip('已删除');
+}
+function bookAddToggle(id){
+  bookAddIn[id]=!bookAddIn[id];
+  renderBooks();
+  if(bookAddIn[id])setTimeout(function(){var e=document.getElementById('bn-idea-'+id);if(e)try{e.focus();}catch(x){}},60);
+}
+function bookNotesToggle(id){bookNotesOpen[id]=(bookNotesOpen[id]===false);renderBooks();}
+function bookOutputAdd(b,note){
+  STATE.outputs=STATE.outputs||[];
+  if(STATE.outputs.some(function(o){return o.noteId===note.id;}))return;
+  STATE.outputs.push({id:Date.now(),date:note.date,desc:'读书笔记：《'+b.title+'》',src:'booknote',noteId:note.id,bookId:b.id});
+  if(typeof save==='function')save('outputs');
+}
+function bookOutputDel(noteId){
+  var before=(STATE.outputs||[]).length;
+  STATE.outputs=(STATE.outputs||[]).filter(function(o){return o.noteId!==noteId;});
+  if(STATE.outputs.length!==before&&typeof save==='function')save('outputs');
+}
+function bookNoteAdd(id){
+  var b=bookFind(id); if(!b)return;
+  var i=document.getElementById('bn-idea-'+id), m=document.getElementById('bn-mine-'+id);
+  var idea=i?i.value.trim():'', mine=m?m.value.trim():'';
+  if(!idea&&!mine){bookTip('至少写一句');if(i)i.focus();return;}
+  var note={id:bookUid(),date:todayStr(),idea:idea,mine:mine,createdAt:Date.now()};
+  b.notes=b.notes||[];
+  b.notes.push(note);
+  bookPersist();bookOutputAdd(b,note);renderBooks();renderIO();
+  var i2=document.getElementById('bn-idea-'+id);if(i2)try{i2.focus();}catch(e){}
+  bookTip('已记一条，输出 +1');
+}
+function bookNoteDel(bid,nid,ev){
+  if(ev&&ev.stopPropagation)ev.stopPropagation();
+  var b=bookFind(bid); if(!b)return;
+  b.notes=(b.notes||[]).filter(function(n){return n.id!==nid;});
+  bookPersist();bookOutputDel(nid);renderBooks();renderIO();
+}
+function bookNoteRename(bid,nid,field,ev){
+  if(ev&&ev.stopPropagation)ev.stopPropagation();
+  var b=bookFind(bid); if(!b)return;
+  var n=bookNoteOf(b,nid); if(!n)return;
+  var box=document.querySelector('[data-bn="'+bid+'|'+nid+'|'+field+'"]');
+  if(!box||box.querySelector('input'))return;
+  var old=n[field]||'';
+  box.innerHTML='<input class="habit-rename" type="text">';
+  var inp=box.querySelector('input');
+  inp.value=old;inp.focus();inp.select();
+  var done=false;
+  var finish=function(ok){
+    if(done)return;done=true;
+    if(ok){var v=inp.value.trim();if(v!==old){n[field]=v;bookPersist();}}
+    renderBooks();
+  };
+  inp.addEventListener('keydown',function(e){
+    if(e.key==='Enter'){e.preventDefault();finish(true);}
+    else if(e.key==='Escape'){e.preventDefault();finish(false);}
+  });
+  inp.addEventListener('blur',function(){finish(true);});
+  inp.addEventListener('click',function(e){e.stopPropagation();});
+}
+function bookTitleRename(id,ev){
+  if(ev&&ev.stopPropagation)ev.stopPropagation();
+  var b=bookFind(id); if(!b)return;
+  var box=document.querySelector('[data-bt-book="'+id+'"]');
+  if(!box||box.querySelector('input'))return;
+  var old=b.title||'';
+  box.innerHTML='<input class="habit-rename" type="text">';
+  var inp=box.querySelector('input');
+  inp.value=old;inp.focus();inp.select();
+  var done=false;
+  var finish=function(ok){
+    if(done)return;done=true;
+    if(ok){var v=inp.value.trim();if(v&&v!==old){b.title=v;bookPersist();}}
+    renderBooks();
+  };
+  inp.addEventListener('keydown',function(e){
+    if(e.key==='Enter'){e.preventDefault();finish(true);}
+    else if(e.key==='Escape'){e.preventDefault();finish(false);}
+  });
+  inp.addEventListener('blur',function(){finish(true);});
+}
+function bookNoteForm(b){
+  return '<div style="margin-top:8px">'+
+    '<textarea id="bn-idea-'+b.id+'" placeholder="读到的观点 / 原文摘录"></textarea>'+
+    '<textarea id="bn-mine-'+b.id+'" placeholder="我的思考 / 新角度（可以只写一句）"></textarea>'+
+    '<div class="row-actions">'+
+      '<button class="btn btn-sm btn-success" onclick="bookNoteAdd(\''+b.id+'\')">保存这一条</button>'+
+      '<button class="btn btn-sm btn-ghost" onclick="bookAddToggle(\''+b.id+'\')">取消</button>'+
+    '</div></div>';
+}
+function bookNoteHTML(b,n){
+  return '<div class="book-note">'+
+    '<div class="book-note-date">'+esc(n.date||'')+'</div>'+
+    (n.idea?'<div class="book-note-txt" data-bn="'+b.id+'|'+n.id+'|idea" title="点一下改" '+
+      'onclick="bookNoteRename(\''+b.id+'\',\''+n.id+'\',\'idea\',event)">📖 '+esc(n.idea)+'</div>':'')+
+    (n.mine?'<div class="book-note-txt mine" data-bn="'+b.id+'|'+n.id+'|mine" title="点一下改" '+
+      'onclick="bookNoteRename(\''+b.id+'\',\''+n.id+'\',\'mine\',event)">💡 '+esc(n.mine)+'</div>':'')+
+    '<div class="row-actions"><button class="btn btn-sm btn-ghost case-del" '+
+      'onclick="bookNoteDel(\''+b.id+'\',\''+n.id+'\',event)">删除这条</button></div>'+
+  '</div>';
+}
+function renderBooks(){
+  var box=document.getElementById('book-list'); if(!box)return;
+  var list=bookList().slice().sort(function(a,b){
+    if(!!a.done!==!!b.done)return a.done?1:-1;
+    return (b.createdAt||0)-(a.createdAt||0);
+  });
+  if(!list.length){
+    box.innerHTML='<div class="card"><p class="meta">还没有书。上面填个书名，点「＋ 添加这本书」，就能开始记了。</p></div>';
+    return;
+  }
+  box.innerHTML=list.map(function(b){
+    var notes=(b.notes||[]).slice().sort(function(x,y){return (y.date||'')<(x.date||'')?-1:1;});
+    var open=(bookNotesOpen[b.id]!==false);
+    return '<div class="card">'+
+      '<div class="book-head">'+
+        '<span class="book-title" data-bt-book="'+b.id+'" title="点一下改书名" '+
+          'onclick="bookTitleRename(\''+b.id+'\',event)">'+esc(b.title)+'</span>'+
+        (b.author?'<span class="book-meta">'+esc(b.author)+'</span>':'')+
+        '<span class="book-meta">'+notes.length+' 条</span>'+
+        '<button class="btn btn-sm '+(b.done?'btn-success':'btn-ghost')+'" onclick="bookToggleDone(\''+b.id+'\')">'+
+          (b.done?'读完了 ✓':'标记读完')+'</button>'+
+      '</div>'+
+      '<div class="book-actions">'+
+        '<button class="btn btn-sm" onclick="bookAddToggle(\''+b.id+'\')">'+(bookAddIn[b.id]?'收起':'＋ 记一条')+'</button>'+
+        (notes.length?'<button class="goal-toggle" style="margin-top:0" onclick="bookNotesToggle(\''+b.id+'\')">'+
+          (open?'▾':'▸')+' 看笔记（'+notes.length+'）</button>':'')+
+        '<button class="btn btn-sm btn-ghost case-del" onclick="bookDel(\''+b.id+'\')">删除这本书</button>'+
+      '</div>'+
+      (bookAddIn[b.id]?bookNoteForm(b):'')+
+      (notes.length&&open?'<div style="margin-top:4px">'+notes.map(function(n){return bookNoteHTML(b,n);}).join('')+'</div>':'')+
+    '</div>';
+  }).join('');
+}
+/* 第一次打开补一条「读书 20 分钟」的每日习惯（只补一次） */
+function seedReadingHabit(){
+  try{
+    if(localStorage.getItem('wb_seed_reading'))return;
+    var has=STATE.habits.some(function(h){return String(h.name||'').indexOf('读')>=0;});
+    if(!has){
+      STATE.habits.push({id:Date.now()+Math.random(),name:'读书 20 分钟',logs:{},goalId:null});
+      if(typeof save==='function')save('habits');
+    }
+    localStorage.setItem('wb_seed_reading','1');
+  }catch(e){}
+}
+
 (function(){
   var d=document.getElementById('dr-date');
   if(d){
@@ -2208,11 +2466,13 @@ function delDaily(id){
   }
   if(typeof renderMap==='object'){
     var rr=renderMap.review;
-    renderMap.review=function(){if(typeof rr==='function')rr();renderDrMaterial();renderDaily();};
+    renderMap.review=function(){if(typeof rr==='function')rr();renderDrMaterial();renderDaily();renderBooks();};
   }
   caseMigrate();
   caseSyncTodoAuto();
-  renderDrMaterial();renderDaily();
+  renderDrMaterial();renderDaily();renderBooks();
+  seedReadingHabit();
+  renderHabits();renderDash();
 })();
 </script>
 <!-- ================= 手机版 v3 交互增强（不改动桌面端行为） ================= -->
@@ -2226,7 +2486,7 @@ const APP_ICON='data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAQAAAAEACAYAAABccq
 
 /* ---------- 轻提示 / 震动 ---------- */
 /* 版本标识：每次改动本文件时改这里——在线版会自动提示手机更新 */
-const BUILD_ID='v12-2026-09-28';
+const BUILD_ID='v13-2026-09-28';
 let toastEl=null,toastTimer=null;
 function toast(msg,ms){
   if(!toastEl){toastEl=document.createElement('div');toastEl.className='m-toast';document.body.appendChild(toastEl);}
