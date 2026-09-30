@@ -161,8 +161,29 @@ textarea{min-height:72px;resize:vertical}
 
 .habit-item{display:flex;align-items:center;justify-content:space-between;gap:8px;flex-wrap:wrap}
 .habit-item .name{font-weight:600;flex:1;min-width:120px}
-.heat-legend{display:flex;align-items:center;gap:6px;font-size:.75em;color:var(--muted);margin-top:8px}
-.heat-cell{width:9px;height:9px;border-radius:2px}
+/* ---------- 本周明细 ---------- */
+.week-box{margin-top:10px;padding:10px;background:var(--bg);border-radius:10px}
+.week-sum{font-size:.86em}
+.week-sum b{color:var(--primary)}
+.week-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:4px;margin-top:8px}
+.week-grid .wk{display:flex;flex-direction:column;align-items:center;gap:1px;padding:6px 0;border-radius:8px;
+  background:var(--card);border:1px solid var(--border);font-size:.7em;color:var(--muted)}
+.week-grid .wk .dt{font-size:1.15em;font-weight:600;color:var(--text)}
+.week-grid .wk.on{background:var(--success);border-color:var(--success);color:#eafaf1}
+.week-grid .wk.on .dt{color:#fff}
+.week-grid .wk.today{outline:2px solid var(--accent);outline-offset:1px}
+
+/* ---------- 当月条形图 ---------- */
+.bar-stats{font-size:.86em;color:var(--muted);margin:2px 0 10px}
+.bar-stats b{color:var(--primary)}
+.bar-chart{display:flex;gap:2px;align-items:stretch;height:136px;overflow-x:auto;padding-bottom:2px}
+.bar-col{flex:1 1 0;min-width:7px;display:flex;flex-direction:column;gap:4px}
+.bar-wrap{flex:1;display:flex;align-items:flex-end}
+.bar{width:100%;border-radius:4px 4px 0 0;background:var(--accent);min-height:2px}
+.bar.empty{background:var(--border);height:2px}
+.bar.full{background:var(--success)}
+.bar-col.today .bar{outline:2px solid var(--accent);outline-offset:1px}
+.bar-day{height:12px;line-height:12px;text-align:center;font-size:.62em;color:var(--muted)}
 
 .row-actions{display:flex;gap:6px;flex-wrap:wrap;margin-top:6px}
 .meta{font-size:.78em;color:var(--muted)}
@@ -283,19 +304,7 @@ body[data-mtheme="dark"] .m-check{border-color:#3b475c}
   .m-habit .m-row{border:none;padding:2px 2px 0;min-height:54px;background:transparent}
   .m-detail{margin-top:11px;padding:12px;background:var(--bg);border-radius:13px;font-size:.84em}
   .m-detail .k{color:var(--muted)}
-  .m-30{display:grid;grid-template-columns:repeat(7,1fr);gap:5px;margin-top:9px}
-  .m-30 .wd{text-align:center;font-size:.72em;color:var(--muted)}
-  .m-30 i{display:block;aspect-ratio:1/1;border-radius:6px;background:var(--border)}
-  .m-30 i.on{background:var(--success)}
-  .m-30 i.today{outline:2px solid var(--accent);outline-offset:1px}
-
-  /* ---------- 全年热力图（横向滑动） ---------- */
-  .m-heat-months{display:flex;font-size:.72em;color:var(--muted);margin:2px 0 4px;height:16px}
-  .m-heat-scroll{overflow-x:auto;overflow-y:hidden;-webkit-overflow-scrolling:touch;padding-bottom:4px}
-  .m-heat-grid{display:grid;grid-auto-flow:column;grid-template-rows:repeat(7,12px);gap:3px;width:max-content}
-  .m-heat-grid i{width:12px;height:12px;border-radius:3px;background:var(--border);display:block}
-  .m-heat-legend{display:flex;align-items:center;gap:6px;font-size:.75em;color:var(--muted);margin-top:9px}
-  .m-heat-legend span{width:12px;height:12px;border-radius:3px;display:block}
+  .m-detail .week-box{background:var(--card)}
 
   /* ---------- 日历 ---------- */
   #calendar .grid-2{display:flex;flex-direction:column}
@@ -511,7 +520,16 @@ select.case-stage{width:auto;font:inherit;font-size:.76em;padding:2px 4px;margin
     <div id="habits" class="view" data-page-node-id="spfhqDPL35xa22A19BzJe3">
       <div class="card" data-page-node-id="bwAMvuUEAczytQlri0fjjh"><input id="habit-name" placeholder="习惯名称" onkeydown="if(event.key==='Enter')addHabit()" data-page-node-id="lTjNYEFmRJg7oWvCRZtGWJ"><button class="btn" onclick="addHabit()" data-page-node-id="kmPILUAdcJhgsKstzAoG3F">添加习惯</button><button class="btn btn-ghost" onclick="manualBackfill()" title="为目标自动补建同名习惯">🔧 同步</button></div>
       <div id="habits-list" data-page-node-id="JLVSi9lDxewjurTDnoRQdI"></div>
-      <div class="card" data-page-node-id="9LhPpJYMdmtXTN3UV6ZVrj"><h3 data-page-node-id="5NxOulcw3HqFgvz2lgQF0t">📈 全年打卡热力图（365天）</h3><div id="heat-content" data-page-node-id="zJlEbJeBFNwMVohxGb6VsD"></div></div>
+      <div class="card">
+        <h3 style="display:flex;align-items:center;justify-content:space-between;gap:8px;flex-wrap:wrap">
+          <span id="heat-title">📈 本月打卡</span>
+          <span style="display:flex;gap:6px">
+            <button class="btn btn-sm btn-ghost" onclick="heatMonthNav(-1)">‹ 上月</button>
+            <button class="btn btn-sm btn-ghost" onclick="heatMonthNav(1)">下月 ›</button>
+          </span>
+        </h3>
+        <div id="heat-content" data-page-node-id="zJlEbJeBFNwMVohxGb6VsD"></div>
+      </div>
     </div>
 
 
@@ -1015,20 +1033,33 @@ function addHabit(){
   STATE.habits.push({id:Date.now(),name,logs:{},goalId:null});
   save('habits');document.getElementById('habit-name').value='';renderHabits();renderDash();
 }
+/* 本周一到周日七天：本周完成天数 + 七格 */
+function weekDays(){
+  var d=new Date(), wd=(d.getDay()+6)%7;
+  var mon=new Date(d); mon.setDate(d.getDate()-wd);
+  var out=[];
+  for(var i=0;i<7;i++){var x=new Date(mon);x.setDate(mon.getDate()+i);out.push(todayStr(x));}
+  return out;
+}
+function habitWeekHTML(h){
+  var wk=weekDays(), t=todayStr(), names=['一','二','三','四','五','六','日'];
+  var logs=h.logs||{};
+  var n=wk.filter(function(k){return logs[k];}).length;
+  var streak=0, d=new Date();
+  while(logs[todayStr(d)]){streak++;d.setDate(d.getDate()-1);}
+  return '<div class="week-box">'+
+    '<div class="week-sum">本周 <b>'+n+'/7</b> 天 · 当前连击 <span class="streak">'+streak+'🔥</span> · 累计 '+Object.keys(logs).length+' 天</div>'+
+    '<div class="week-grid">'+wk.map(function(k,i){
+      var on=!!logs[k];
+      return '<div class="wk'+(on?' on':'')+(k===t?' today':'')+'" title="'+k+(on?' 已打卡':'')+'">'+
+        '<span>'+names[i]+'</span><span class="dt">'+parseInt(k.slice(8),10)+'</span></div>';
+    }).join('')+'</div></div>';
+}
 function renderHabits(){
   const today=todayStr();
   document.getElementById('habits-list').innerHTML=STATE.habits.map(h=>{
     const done=h.logs[today];
-    let detail='';
-    if(h._open){
-      const days=Object.keys(h.logs).sort().reverse().slice(0,30);
-      const done30=days.filter(d=>h.logs[d]).length;
-      let streak=0;const d=new Date();
-      while(h.logs[todayStr(d)]){streak++;d.setDate(d.getDate()-1);}
-      detail='<div style="margin-top:10px;padding:10px;background:var(--bg);border-radius:8px;font-size:.85em">'+
-        '<p>近30天完成：'+done30+'/30 | 当前连击：<span class="streak">'+streak+'🔥</span> | 累计：'+Object.keys(h.logs).length+'天</p>'+
-        '<div class="cal-grid" style="margin-top:8px">'+days.map(x=>'<div class="cal-day '+(h.logs[x]?'has':'')+'" title="'+x+'">'+parseInt(x.slice(8))+'</div>').join('')+'</div></div>';
-    }
+    const detail=h._open?habitWeekHTML(h):'';
     const g=h.goalId?STATE.goals.find(x=>x.id==h.goalId):null;
     const goalTitle=g?g.title:'';
     const goalShort=goalTitle.length>10?goalTitle.slice(0,10)+'…':goalTitle;
@@ -1066,11 +1097,47 @@ function renameHabit(id,ev){
   inp.addEventListener('blur',function(){finish(true);});
 }
 function delHabit(id){const h=STATE.habits.find(x=>x.id==id);if(!confirm('删除习惯「'+h.name+'」？\n历史打卡记录（'+Object.keys(h.logs).length+' 天）会一并删除。'))return;STATE.habits=STATE.habits.filter(x=>x.id!=id);save('habits');renderHabits();renderDash();}
+/* 当月条形图：每天一根柱，柱高 = 当天完成的习惯数 ÷ 习惯总数 */
+let heatYM=null;
+function heatDate(){
+  if(!heatYM){var d=new Date();heatYM={y:d.getFullYear(),m:d.getMonth()};}
+  return heatYM;
+}
+function heatMonthNav(delta){
+  var c=heatDate(), t=new Date();
+  var d=new Date(c.y,c.m+delta,1);
+  if(d.getFullYear()>t.getFullYear()||(d.getFullYear()===t.getFullYear()&&d.getMonth()>t.getMonth()))return;
+  heatYM={y:d.getFullYear(),m:d.getMonth()};
+  renderHeat();
+}
 function renderHeat(){
-  let html='<div style="display:flex;flex-wrap:wrap;gap:2px">';
-  for(let i=364;i>=0;i--){const d=new Date();d.setDate(d.getDate()-i);const k=todayStr(d);let lv=0;STATE.habits.forEach(h=>{if(h.logs[k])lv++;});lv=Math.min(lv,3);html+='<div class="heat-cell" style="background:'+(lv===0?'var(--border)':lv===1?'#c8e6c9':lv===2?'#66bb6a':'#2e7d32')+'" title="'+k+'：'+lv+' 项打卡"></div>';}
-  html+='</div><div class="heat-legend">少 <span class="heat-cell" style="background:var(--border)"></span><span class="heat-cell" style="background:#c8e6c9"></span><span class="heat-cell" style="background:#66bb6a"></span><span class="heat-cell" style="background:#2e7d32"></span> 多 · 过去365天</div>';
-  document.getElementById('heat-content').innerHTML=html;
+  var box=document.getElementById('heat-content'); if(!box)return;
+  var c=heatDate(), t=todayStr();
+  var title=document.getElementById('heat-title');
+  if(title)title.textContent='📈 '+c.y+' 年 '+(c.m+1)+' 月打卡';
+  var habits=STATE.habits||[];
+  if(!habits.length){
+    box.innerHTML='<p class="meta">还没有习惯，添加之后这里会按天长出柱子。</p>';
+    return;
+  }
+  var total=habits.length;
+  var days=new Date(c.y,c.m+1,0).getDate();
+  var hit=0,sum=0,bars='';
+  for(var i=1;i<=days;i++){
+    var k=todayStr(new Date(c.y,c.m,i));
+    var n=0;
+    habits.forEach(function(h){if(h.logs&&h.logs[k])n++;});
+    if(n>0)hit++;
+    sum+=n;
+    var pct=n?Math.max(Math.round(n/total*100),6):0;
+    var cls='bar'+(n===0?' empty':'')+(n>0&&n>=total?' full':'');
+    var day=(i===1||i%5===0||i===days)?String(i):'';
+    bars+='<div class="bar-col'+(k===t?' today':'')+'" title="'+(c.m+1)+'月'+i+'日：'+n+' 项">'+
+      '<div class="bar-wrap"><div class="'+cls+'" style="height:'+pct+'%"></div></div>'+
+      '<span class="bar-day">'+day+'</span></div>';
+  }
+  box.innerHTML='<p class="bar-stats">本月有打卡 <b>'+hit+'</b> 天 · 共 <b>'+sum+'</b> 项次（共 '+total+' 项习惯）</p>'+
+    '<div class="bar-chart">'+bars+'</div>';
 }
 
 /* ---------- 日历待办 ---------- */
@@ -2275,7 +2342,7 @@ const APP_ICON='data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAQAAAAEACAYAAABccq
 
 /* ---------- 轻提示 / 震动 ---------- */
 /* 版本标识：每次改动本文件时改这里——在线版会自动提示手机更新 */
-const BUILD_ID='v15-2026-09-28';
+const BUILD_ID='v16-2026-09-30';
 let toastEl=null,toastTimer=null;
 function toast(msg,ms){
   if(!toastEl){toastEl=document.createElement('div');toastEl.className='m-toast';document.body.appendChild(toastEl);}
@@ -2529,21 +2596,7 @@ function setDashOrder(){
 /* ---------- 习惯页 ---------- */
 const openHabits=new Set();
 function mHabitDetail(h){
-  const pad=new Date();pad.setDate(pad.getDate()-29);
-  const startPad=pad.getDay();
-  let head='';['日','一','二','三','四','五','六'].forEach(w=>{head+='<div class="wd">'+w+'</div>';});
-  let cells='';
-  for(let i=0;i<startPad;i++)cells+='<i style="visibility:hidden"></i>';
-  let n=0;
-  for(let i=29;i>=0;i--){
-    const d=new Date();d.setDate(d.getDate()-i);
-    const k=todayStr(d);const on=!!h.logs[k];
-    if(on)n++;
-    cells+='<i class="'+(on?'on':'')+(k===todayStr()?' today':'')+'" title="'+k+'"></i>';
-  }
-  return '<div class="m-detail"><div><span class="k">近30天完成</span> <b>'+n+'/30</b> · '+
-      '<span class="k">当前连击</span> <b>'+streakOf(h)+'</b> · <span class="k">累计</span> <b>'+Object.keys(h.logs).length+'</b> 天</div>'+
-    '<div class="m-30">'+head+cells+'</div>'+
+  return '<div class="m-detail">'+habitWeekHTML(h)+
     '<div class="m-sheet-btns" style="margin-top:12px"><button class="btn btn-sm btn-ghost" data-del-habit="'+h.id+'">删除这个习惯</button></div></div>';
 }
 function mHabitCard(h,today){
@@ -2564,45 +2617,7 @@ function mHabits(){
   const box=el('habits-list');
   if(box)box.innerHTML=STATE.habits.length?STATE.habits.map(h=>mHabitCard(h,today)).join('')
     :emptyHTML('还没有习惯','上面输入名称即可添加，坚持打卡会点亮热力图');
-  mHeat();
-}
-
-/* ---------- 全年热力图（横向滑动） ---------- */
-function mHeat(){
-  const wrap=el('heat-content');if(!wrap)return;
-  const DAY=86400000;
-  const t0=new Date();t0.setHours(0,0,0,0);
-  const start=new Date(t0.getTime()-364*DAY);
-  start.setDate(start.getDate()-start.getDay());
-  const cols=Math.ceil((Math.round((t0-start)/DAY)+1)/7);
-  let cells='',days=0,labels='',used=0;
-  const months=[];
-  for(let c=0;c<cols;c++)months.push(new Date(start.getTime()+c*7*DAY).getMonth());
-  for(let c=0;c<cols;c++){
-    if(c===0||months[c]!==months[c-1]){
-      const fd=new Date(start.getTime()+c*7*DAY);
-      if(fd.getDate()<=7){
-        let n=0;while(c+n<cols&&months[c+n]===months[c]&&n<5)n++;
-        labels+='<span style="width:'+(n*15)+'px">'+(months[c]+1)+'月</span>';
-        used+=n;
-      }
-    }
-    for(let r=0;r<7;r++){
-      const d=new Date(start.getTime()+(c*7+r)*DAY);
-      if(d>t0){cells+='<i style="visibility:hidden"></i>';continue;}
-      const k=todayStr(d);
-      let lv=0;STATE.habits.forEach(h=>{if(h.logs[k])lv++;});
-      if(lv)days++;
-      const bg=lv===0?'var(--border)':lv===1?'#a5d6a7':lv===2?'#66bb6a':'#2e7d32';
-      cells+='<i title="'+k+' · '+lv+' 项打卡" style="background:'+bg+'"></i>';
-    }
-  }
-  if(used<cols)labels+='<span style="width:'+((cols-used)*15)+'px"></span>';
-  wrap.innerHTML='<div class="m-heat-scroll"><div class="m-heat-months">'+labels+'</div><div class="m-heat-grid">'+cells+'</div></div>'+
-    '<div class="m-heat-legend">少 <span style="background:var(--border)"></span><span style="background:#a5d6a7"></span><span style="background:#66bb6a"></span><span style="background:#2e7d32"></span> 多'+
-    ' &nbsp;·&nbsp; 近一年共打卡 <b>'+days+'</b> 天</div>';
-  const sc=wrap.querySelector('.m-heat-scroll');
-  if(sc)sc.scrollLeft=sc.scrollWidth;
+  renderHeat();
 }
 
 /* ---------- 日历 ---------- */
@@ -2855,13 +2870,11 @@ if(window.visualViewport){
 const _renderDash=window.renderDash;
 const _renderHabits=window.renderHabits;
 const _renderCalendar=window.renderCalendar;
-const _renderHeat=window.renderHeat;
 const _showDay=window.showDay;
 const _pickDate=window.pickDate;
 const _show=window.show;
 window.renderDash=function(){mDash();};
 window.renderHabits=function(){if(isM())mHabits();else _renderHabits();};
-window.renderHeat=function(){if(isM())mHeat();else _renderHeat();};
 window.renderCalendar=function(){
   if(isM()){mCalendar();return;}
   _renderCalendar();
