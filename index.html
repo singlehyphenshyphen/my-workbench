@@ -160,18 +160,16 @@ textarea{min-height:72px;resize:vertical}
 .cal-day .dot{display:block;width:4px;height:4px;background:var(--accent);border-radius:50%;margin:2px auto 0}
 
 .habit-item{display:flex;align-items:center;justify-content:space-between;gap:8px;flex-wrap:wrap}
-.habit-item .name{font-weight:600;flex:1;min-width:120px}
-/* ---------- 本周明细 ---------- */
-.week-box{margin-top:10px;padding:10px;background:var(--bg);border-radius:10px}
-.week-sum{font-size:.86em}
-.week-sum b{color:var(--primary)}
-.week-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:4px;margin-top:8px}
-.week-grid .wk{display:flex;flex-direction:column;align-items:center;gap:1px;padding:6px 0;border-radius:8px;
-  background:var(--card);border:1px solid var(--border);font-size:.7em;color:var(--muted)}
-.week-grid .wk .dt{font-size:1.15em;font-weight:600;color:var(--text)}
-.week-grid .wk.on{background:var(--success);border-color:var(--success);color:#eafaf1}
-.week-grid .wk.on .dt{color:#fff}
-.week-grid .wk.today{outline:2px solid var(--accent);outline-offset:1px}
+.habit-item .name{font-weight:600;min-width:0;max-width:46%}
+/* ---------- 习惯热度图（名字隔壁常显） ---------- */
+.habit-heat{display:inline-flex;align-items:center;gap:6px;flex-shrink:0}
+.mini-heat{display:grid;grid-template-columns:repeat(7,8px);grid-auto-rows:8px;gap:2px}
+.mini-heat i{display:block;width:8px;height:8px;border-radius:2px;background:var(--border)}
+.mini-heat i.on{background:var(--success)}
+.mini-heat i.fut{background:transparent}
+.mini-heat i.today{outline:2px solid var(--accent);outline-offset:1px}
+.heat-week{font-size:.72em;color:var(--muted);white-space:nowrap}
+.heat-week b{color:var(--success)}
 
 /* ---------- 当月条形图 ---------- */
 .bar-stats{font-size:.86em;color:var(--muted);margin:2px 0 10px}
@@ -297,14 +295,8 @@ body[data-mtheme="dark"] .m-check{border-color:#3b475c}
   .m-qa .ic{font-size:19px;line-height:1}
 
   /* 通用列表行（.m-card-list / .m-row / .m-check / .m-empty / .m-fire）已提升为全局样式，见上方 */
-  .m-expand{width:100%;margin-top:8px;min-height:42px;border:1px dashed var(--border);background:transparent;color:var(--muted);
-    border-radius:13px;font-family:inherit;font-size:.86em;font-weight:600;cursor:pointer}
-  .m-expand:active{background:var(--accent-soft);color:var(--accent)}
   .m-habit{background:var(--card);border:1px solid var(--border);border-radius:18px;padding:11px;margin-bottom:11px;box-shadow:var(--shadow)}
   .m-habit .m-row{border:none;padding:2px 2px 0;min-height:54px;background:transparent}
-  .m-detail{margin-top:11px;padding:12px;background:var(--bg);border-radius:13px;font-size:.84em}
-  .m-detail .k{color:var(--muted)}
-  .m-detail .week-box{background:var(--card)}
 
   /* ---------- 日历 ---------- */
   #calendar .grid-2{display:flex;flex-direction:column}
@@ -1033,46 +1025,45 @@ function addHabit(){
   STATE.habits.push({id:Date.now(),name,logs:{},goalId:null});
   save('habits');document.getElementById('habit-name').value='';renderHabits();renderDash();
 }
-/* 本周一到周日七天：本周完成天数 + 七格 */
-function weekDays(){
+/* 习惯热度图：最近 4 周，一行一周、一列一天（周一到周日） */
+function habitWeekDone(h){
+  var logs=(h&&h.logs)||{}, n=0;
   var d=new Date(), wd=(d.getDay()+6)%7;
   var mon=new Date(d); mon.setDate(d.getDate()-wd);
-  var out=[];
-  for(var i=0;i<7;i++){var x=new Date(mon);x.setDate(mon.getDate()+i);out.push(todayStr(x));}
-  return out;
+  for(var i=0;i<7;i++){var x=new Date(mon);x.setDate(mon.getDate()+i);if(logs[todayStr(x)])n++;}
+  return n;
 }
-function habitWeekHTML(h){
-  var wk=weekDays(), t=todayStr(), names=['一','二','三','四','五','六','日'];
-  var logs=h.logs||{};
-  var n=wk.filter(function(k){return logs[k];}).length;
-  var streak=0, d=new Date();
-  while(logs[todayStr(d)]){streak++;d.setDate(d.getDate()-1);}
-  return '<div class="week-box">'+
-    '<div class="week-sum">本周 <b>'+n+'/7</b> 天 · 当前连击 <span class="streak">'+streak+'🔥</span> · 累计 '+Object.keys(logs).length+' 天</div>'+
-    '<div class="week-grid">'+wk.map(function(k,i){
-      var on=!!logs[k];
-      return '<div class="wk'+(on?' on':'')+(k===t?' today':'')+'" title="'+k+(on?' 已打卡':'')+'">'+
-        '<span>'+names[i]+'</span><span class="dt">'+parseInt(k.slice(8),10)+'</span></div>';
-    }).join('')+'</div></div>';
+function habitMiniHeat(h){
+  var logs=(h&&h.logs)||{}, t=todayStr();
+  var d=new Date(), wd=(d.getDay()+6)%7;
+  var mon=new Date(d); mon.setDate(d.getDate()-wd);
+  var start=new Date(mon); start.setDate(mon.getDate()-21);
+  var cells='';
+  for(var i=0;i<28;i++){
+    var x=new Date(start); x.setDate(start.getDate()+i);
+    var k=todayStr(x), on=!!logs[k], fut=k>t;
+    cells+='<i class="'+(fut?'fut':(on?'on':''))+(k===t?' today':'')+'" title="'+k+(on?' 已打卡':'')+'"></i>';
+  }
+  return '<span class="habit-heat" title="最近 4 周：一行一周，一列一天（周一到周日）">'+
+    '<span class="mini-heat">'+cells+'</span>'+
+    '<span class="heat-week">本周 <b>'+habitWeekDone(h)+'/7</b></span></span>';
 }
 function renderHabits(){
   const today=todayStr();
   document.getElementById('habits-list').innerHTML=STATE.habits.map(h=>{
     const done=h.logs[today];
-    const detail=h._open?habitWeekHTML(h):'';
     const g=h.goalId?STATE.goals.find(x=>x.id==h.goalId):null;
     const goalTitle=g?g.title:'';
     const goalShort=goalTitle.length>10?goalTitle.slice(0,10)+'…':goalTitle;
     const goalTag=g?'<span class="tag" title="'+esc(goalTitle)+'">⊙ '+esc(goalShort)+'</span>':'';
     return '<div class="card"><div class="habit-item"><span class="name" data-rename="'+h.id+'" onclick="renameHabit('+h.id+',event)" title="点一下改名字">'+goalTag+' '+esc(h.name)+'</span>'+
-      '<span style="display:flex;gap:6px"><button class="btn btn-sm '+(done?'btn-success':'btn-ghost')+'" onclick="toggleHabit('+h.id+')">'+(done?'✓ 已打卡':'打卡')+'</button>'+
-      '<button class="btn btn-sm btn-ghost" onclick="toggleDetail('+h.id+')">📋 明细</button>'+
-      '<button class="btn btn-sm btn-danger" onclick="delHabit('+h.id+')">删除</button></span></div>'+detail+'</div>';
+      habitMiniHeat(h)+
+      '<span style="display:flex;gap:6px;margin-left:auto"><button class="btn btn-sm '+(done?'btn-success':'btn-ghost')+'" onclick="toggleHabit('+h.id+')">'+(done?'✓ 已打卡':'打卡')+'</button>'+
+      '<button class="btn btn-sm btn-danger" onclick="delHabit('+h.id+')">删除</button></span></div></div>';
   }).join('')||'<div class="empty">还没有习惯，添加第一个吧</div>';
   renderHeat();
 }
 function toggleHabit(id){const h=STATE.habits.find(x=>x.id==id);const t=todayStr();if(h){h.logs[t]=!h.logs[t];save('habits');renderHabits();renderDash();}}
-function toggleDetail(id){const h=STATE.habits.find(x=>x.id==id);h._open=!h._open;renderHabits();}
 /* 就地改习惯名称：点名字变输入框，回车/失焦保存，Esc 取消 */
 function renameHabit(id,ev){
   if(ev&&ev.stopPropagation)ev.stopPropagation();
@@ -2342,7 +2333,7 @@ const APP_ICON='data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAQAAAAEACAYAAABccq
 
 /* ---------- 轻提示 / 震动 ---------- */
 /* 版本标识：每次改动本文件时改这里——在线版会自动提示手机更新 */
-const BUILD_ID='v16-2026-09-30';
+const BUILD_ID='v17-2026-09-30';
 let toastEl=null,toastTimer=null;
 function toast(msg,ms){
   if(!toastEl){toastEl=document.createElement('div');toastEl.className='m-toast';document.body.appendChild(toastEl);}
@@ -2594,23 +2585,16 @@ function setDashOrder(){
 }
 
 /* ---------- 习惯页 ---------- */
-const openHabits=new Set();
-function mHabitDetail(h){
-  return '<div class="m-detail">'+habitWeekHTML(h)+
-    '<div class="m-sheet-btns" style="margin-top:12px"><button class="btn btn-sm btn-ghost" data-del-habit="'+h.id+'">删除这个习惯</button></div></div>';
-}
 function mHabitCard(h,today){
   const done=!!h.logs[today];const st=streakOf(h);
   const g=h.goalId?STATE.goals.find(x=>x.id==h.goalId):null;
-  const open=openHabits.has(String(h.id));
   return '<div class="m-habit"><div class="m-row" data-habit="'+h.id+'">'+
     '<button class="m-check big '+(done?'on':'')+'" aria-label="打卡">'+(done?'✓':'')+'</button>'+
-    '<div class="m-row-main"><div class="m-row-txt">'+esc(h.name)+'</div>'+
-      '<div class="m-row-meta">'+(g?'<span>⊙ '+esc(g.title)+'</span>':'')+'<span>累计 '+Object.keys(h.logs).length+' 天</span></div></div>'+
-    (st?'<span class="m-fire">'+st+' 🔥</span>':'')+
-    '</div>'+
-    '<button class="m-expand" data-detail="'+h.id+'">'+(open?'收起明细 ▴':'📋 明细 ▾')+'</button>'+
-    (open?mHabitDetail(h):'')+'</div>';
+    '<div class="m-row-main"><div class="m-row-txt">'+esc(h.name)+' '+habitMiniHeat(h)+'</div>'+
+      '<div class="m-row-meta">'+(g?'<span>⊙ '+esc(g.title)+'</span>':'')+'<span>累计 '+Object.keys(h.logs).length+' 天</span>'+
+      (st?'<span>🔥 '+st+' 天</span>':'')+'</div></div>'+
+    '<button class="m-icon-btn" data-del-habit="'+h.id+'" aria-label="删除">✕</button>'+
+    '</div></div>';
 }
 function mHabits(){
   const today=todayStr();
@@ -2746,7 +2730,7 @@ function delTodoById(id){
 function delHabitById(id){
   const h=STATE.habits.find(x=>x.id==id);if(!h)return;
   confirmSheet('删除习惯「'+h.name+'」？\n历史打卡记录（'+Object.keys(h.logs).length+' 天）会一并删除。',function(){
-    STATE.habits=STATE.habits.filter(x=>x.id!=id);openHabits.delete(String(id));save('habits');renderAll();
+    STATE.habits=STATE.habits.filter(x=>x.id!=id);save('habits');renderAll();
   });
 }
 document.addEventListener('click',function(e){
@@ -2769,14 +2753,6 @@ document.addEventListener('click',function(e){
 
   const todoRow=t.closest('[data-todo]');
   if(todoRow){toggleTodo(parseFloat(todoRow.getAttribute('data-todo')));vib(12);return;}
-
-  const dbtn=t.closest('[data-detail]');
-  if(dbtn){
-    const id=String(parseFloat(dbtn.getAttribute('data-detail')));
-    if(openHabits.has(id))openHabits.delete(id);else openHabits.add(id);
-    renderHabits();
-    return;
-  }
 
   const qa=t.closest('[data-qa]');
   if(qa){
