@@ -585,7 +585,12 @@ body[data-theme="dark"] input,body[data-theme="dark"] textarea,body[data-theme="
 .dh-name{flex:1;min-width:0;font-size:14px;cursor:pointer;word-break:break-word}
 .dh-name.done{color:var(--muted);text-decoration:line-through}
 .dh-row .tier-chip{pointer-events:none}
-@media(max-width:760px){#dash-habits-card{display:none}}
+#m-habits-card{display:none !important}
+@media(max-width:760px){
+  .dh-row{min-height:46px;padding:9px 0}
+  .dh-check{width:26px;height:26px;font-size:13px}
+  .dh-name{font-size:15px}
+}
 
 /* ========== 6. 手机端（移动优先：44px 触控目标） ========== */
 @media(max-width:760px){
@@ -2798,7 +2803,7 @@ const APP_ICON='data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAQAAAAEACAYAAABccq
 
 /* ---------- 轻提示 / 震动 ---------- */
 /* 版本标识：每次改动本文件时改这里——在线版会自动提示手机更新 */
-const BUILD_ID='v23-2026-11-02-ui';
+const BUILD_ID='v24-2026-11-02-ui';
 let toastEl=null,toastTimer=null;
 function toast(msg,ms){
   if(!toastEl){toastEl=document.createElement('div');toastEl.className='m-toast';document.body.appendChild(toastEl);}
