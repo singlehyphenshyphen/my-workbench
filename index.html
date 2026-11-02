@@ -577,6 +577,15 @@ body[data-theme="dark"] input,body[data-theme="dark"] textarea,body[data-theme="
 .od-date{flex-shrink:0;font-size:12px;color:var(--danger);font-variant-numeric:tabular-nums}
 .od-txt{flex:1;min-width:0;word-break:break-word}
 .od-row .btn{flex-shrink:0}
+.dh-row{display:flex;align-items:center;gap:9px;padding:7px 0;border-bottom:1px solid var(--border)}
+.dh-row:last-child{border-bottom:none}
+.dh-check{width:22px;height:22px;border-radius:50%;border:1.5px solid var(--n-300);background:transparent;color:#fff;
+  font-size:12px;line-height:1;display:inline-flex;align-items:center;justify-content:center;cursor:pointer;flex-shrink:0;padding:0}
+.dh-check.on{background:var(--success);border-color:var(--success)}
+.dh-name{flex:1;min-width:0;font-size:14px;cursor:pointer;word-break:break-word}
+.dh-name.done{color:var(--muted);text-decoration:line-through}
+.dh-row .tier-chip{pointer-events:none}
+@media(max-width:760px){#dash-habits-card{display:none}}
 
 /* ========== 6. 手机端（移动优先：44px 触控目标） ========== */
 @media(max-width:760px){
@@ -645,6 +654,7 @@ body[data-theme="dark"] input,body[data-theme="dark"] textarea,body[data-theme="
         <div class="card" data-page-node-id="qbUiLyICsrfDeVoBek19dE"><h3 data-page-node-id="PcnrlRoLyCTy3cCaOEUJlD">📋 今日待办</h3><div id="dash-todos" data-page-node-id="Oz8CtBNAluPpYgYnMwdzC6"></div></div>
         <div class="card" data-page-node-id="yoqJPKwiEtntUK5pFh1joF"><h3 data-page-node-id="dRFyId4TewLNQtApScHiXf">📌 有空就做</h3><div id="dash-flex" data-page-node-id="q6YXSloVZN2MA99gg1eHow"></div></div>
         <div class="card" data-page-node-id="w6tuEKGJcq237UCIdLqTnd"><h3 data-page-node-id="LKzSfQu3PzLusjrkwf2Wqe">🎯 目标进度</h3><div id="dash-goals" data-page-node-id="bP2HNyP2r8PFSSsGphDpYB"></div></div>
+        <div class="card" id="dash-habits-card"><h3>✅ 今日习惯</h3><div id="dash-habits"></div></div>
       </div>
     </div>
 
@@ -940,6 +950,24 @@ function renderDash(){
       (subs.length?'<div class="pbar"><div class="pfill" style="width:'+pct+'%"></div></div><span class="meta">'+done+'/'+subs.length+' 步</span>'
         :'<span class="meta">本周打卡 '+ev.ck+' 天 · 完成 '+ev.td+' 项</span>')+'</div>';
   }).join('')||'<div class="empty">暂无目标，去「长期目标」创建吧</div>';
+  const hbox=document.getElementById('dash-habits');
+  if(hbox){
+    if(!STATE.habits.length){hbox.innerHTML='<div class="empty">还没有习惯</div>';}
+    else{
+      const rank={daily:0,weekly:1,optional:2};
+      const hs=STATE.habits.slice().sort(function(a,b){
+        var x=rank[habitTier(a)],y=rank[habitTier(b)];
+        if(x!==y)return x-y;
+        return String(a.name||'').localeCompare(String(b.name||''));
+      });
+      hbox.innerHTML=hs.map(function(h){
+        var done=!!h.logs[today],tier=habitTier(h);
+        return '<div class="dh-row"><button class="dh-check'+(done?' on':'')+'" onclick="toggleHabit('+h.id+')" aria-label="打卡">'+(done?'✓':'')+'</button>'+
+          '<span class="dh-name'+(done?' done':'')+'" onclick="toggleHabit('+h.id+')">'+esc(h.name)+'</span>'+
+          (tier!=='daily'?'<span class="tier-chip '+tier+'">'+habitTierName(h)+'</span>':'')+'</div>';
+      }).join('');
+    }
+  }
   renderDashBanner();
 }
 
@@ -2770,7 +2798,7 @@ const APP_ICON='data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAQAAAAEACAYAAABccq
 
 /* ---------- 轻提示 / 震动 ---------- */
 /* 版本标识：每次改动本文件时改这里——在线版会自动提示手机更新 */
-const BUILD_ID='v22-2026-11-02-ui';
+const BUILD_ID='v23-2026-11-02-ui';
 let toastEl=null,toastTimer=null;
 function toast(msg,ms){
   if(!toastEl){toastEl=document.createElement('div');toastEl.className='m-toast';document.body.appendChild(toastEl);}
@@ -2944,7 +2972,8 @@ function mHabitRow(h,today,noRename){
   return '<div class="m-row" data-habit="'+h.id+'">'+
     '<button class="m-check '+(done?'on':'')+'" aria-label="打卡">'+(done?'✓':'')+'</button>'+
     '<div class="m-row-main">'+name+
-    '<div class="m-row-meta"><span>'+(done?'今天已打卡':'点一下完成打卡')+'</span>'+(st?'<span>🔥 '+st+' 天</span>':'')+'</div></div></div>';
+    '<div class="m-row-meta">'+(habitTier(h)!=='daily'?'<span class="tier-chip '+habitTier(h)+'">'+habitTierName(h)+'</span>':'')+
+    '<span>'+(done?'今天已打卡':'点一下完成打卡')+'</span>'+(st?'<span>🔥 '+st+' 天</span>':'')+'</div></div></div>';
 }
 function mHeroHTML(){
   const today=todayStr();
@@ -2997,19 +3026,21 @@ function mDash(){
 /* 仪表盘「今日习惯」卡：只列今天还没打卡的习惯；全部打完显示一句祝贺 */
 function renderDashHabits(today){
   const card=el('m-habits-card');if(!card)return;
-  const daily=STATE.habits.filter(h=>habitTier(h)==='daily');
-  const list=daily.length?daily:STATE.habits;
-  const rest=STATE.habits.length-list.length;
+  const rank={daily:0,weekly:1,optional:2};
+  const list=STATE.habits.slice().sort(function(a,b){
+    var x=rank[habitTier(a)],y=rank[habitTier(b)];
+    if(x!==y)return x-y;
+    return String(a.name||'').localeCompare(String(b.name||''));
+  });
   const doneN=list.filter(h=>h.logs[today]).length;
   const h3=card.querySelector('h3');
-  if(h3)h3.textContent='✅ 今日必做'+(list.length?' '+doneN+'/'+list.length:'');
+  if(h3)h3.textContent='✅ 今日习惯'+(list.length?' '+doneN+'/'+list.length:'');
   const box=el('m-habits-body');if(!box)return;
   if(!list.length){box.innerHTML=emptyHTML('还没有习惯','去「✅ 习惯打卡」页添加一个');return;}
   const left=list.filter(h=>!h.logs[today]);
-  const restTip=rest?('<div class="meta" style="margin-top:8px">另有 '+rest+' 个每周 / 备选习惯，去「习惯打卡」页看</div>'):'';
-  if(!left.length){box.innerHTML=emptyHTML('今天全部完成 🎉','明天继续保持')+restTip;return;}
+  if(!left.length){box.innerHTML=emptyHTML('今天全部完成 🎉','明天继续保持');return;}
   // 仪表盘这张卡只干一件事：点一下打卡。所以名字不挂改名入口（改名去「✅ 习惯打卡」页）
-  box.innerHTML='<div class="m-card-list">'+left.map(h=>mHabitRow(h,today,true)).join('')+'</div>'+restTip;
+  box.innerHTML='<div class="m-card-list">'+left.map(h=>mHabitRow(h,today,true)).join('')+'</div>';
 }
 
 /* 卡片顺序：手机端习惯卡排最前（一打开就看得到），电脑端今日待办排第一 */
